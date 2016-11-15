@@ -1,0 +1,21 @@
+{
+	"name": "codem/onetime",
+	"description": "A module to assist saving of private values to a backend",
+	"type": "silverstripe-module",
+	"keywords": ["silverstripe", "kms", "aws"],
+	"license": "BSD-3-Clause",
+	"authors": [
+	{
+		"name": "James Ellis",
+		"email": "info@codem.com.au"
+	}
+	],
+	"extra": {
+		"installer-name": "onetime"
+	},
+	"require":
+	{
+		"silverstripe/framework": "~3.2",
+		"aws/aws-sdk-php": "~3.0"
+	}
+}
