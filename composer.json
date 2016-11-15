@@ -1,5 +1,5 @@
 {
-	"name": "codem/onetime",
+	"name": "MrJamesEllis/silverstripe-onetime",
 	"description": "A module to assist saving of private values to a backend",
 	"type": "silverstripe-module",
 	"keywords": ["silverstripe", "kms", "aws"],
