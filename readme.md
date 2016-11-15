@@ -5,10 +5,39 @@ Once the value is saved it is not shown again in the relevant field.
 
 To update the value, add it to the relevant field and save the record, the old value will be overwritten.
 
-To protect secure data in transmission, it's a wise idea to encrypt your site, or at least /admin, using an SSL certificate.
+To protect secure data in transmission it's a wise idea to encrypt your site, or at least /admin, using an SSL certificate.
 
 ## Requirements
 Per composer.json
+
+## Marking fields in DataObjects
+In your site/module Yaml configuration, assign the following extension to the relevant DataObjects:
+
+```
+MyDataObject:
+  extensions:
+    - Codem\OneTime\HasSecrets
+AnotherDataObject:
+  extensions:
+    - Codem\OneTime\HasSecrets
+```
+
+In the relevant DataObjects, set up private statics to mark certain fields as being handled by the module:
+```
+<?php
+class MyDataObject extends DataObject {
+
+  private static $secret_fields = array('SomeSecret','AnAPIPassword');
+  private static $secrets_provider = "AmazonKMS";// other value is 'Local'
+
+  // etc
+}
+```
+
+Run a flush=1 so that Silverstripe can pick up the new statics and the open the relevant screen in the admin showing your DataObject EditForm.
+If all goes well you should see the following, using the example above:
+1. When the values of 'SomeSecret' or 'AnAPIPassword' have not been provided, the field will have a Right Title of 'No value exists yet for this configuration entry'
+2. When the value of  'SomeSecret' is provided, that field will have a Right Title of 'A value exists for this configuration entry', the same will happen when a value for 'AnAPIPassword' is provided.
 
 ## Providers
 There are two providers currently supported
@@ -22,7 +51,7 @@ The values are stored encrypted in the local database and are not shown in the r
 
 You can use the decrypted values in your application, for instance submitting a consumer secret to an API.
 
-AmazonKMS requires an AWS Key, Secret Key, Key ID and AWS Region value to be available, add them to your site's configuration yaml like so:
+AmazonKMS requires an AWS Key, Secret Key, Key ID and AWS Region value to be available, add them to your site's configuration Yaml like so:
 
 ```
 Codem\OneTime\ProviderAmazonKMS:
