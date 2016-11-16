@@ -47,8 +47,12 @@ class HasSecrets extends \DataExtension {
 			throw new \Exception("Field {$field} is not a valid configuration field");
 		}
 		$provider = $this->getSecretsProvider();
-		$backend = self::loadProvider($provider);
-		return $backend->decrypt($this->owner->$field);
+		if($provider != "Local") {
+			$backend = self::loadProvider($provider);
+			return $backend->decrypt($this->owner->$field);
+		} else {
+			return $this->owner->$field;
+		}
 	}
 
 	public function updateCmsFields(\FieldList $fields) {
