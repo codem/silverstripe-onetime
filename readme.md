@@ -70,6 +70,13 @@ If you want to use this option, add it to the above like so:
 
 The IAM user with the relevant access_key and secret must have encrypt/decrypt privileges set up. You should not use your AWS root/admin user for this.
 
+## Field value truncation
+Encrypted values will be longer than the plain text version entered into the field.
+
+If your field is set as a Varchar field, you may experience truncation of the encrypted value when the database insert occurs. Rather than this module automatically changing your field types, it's recommended that you specify "Text" as the field type for the relevant fields.
+
+You can then cast the resulting TextareaField as a TextField in your DataObject's getCmsFields if required.
+
 ## LICENSE
 
 Per composer.json
