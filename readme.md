@@ -36,7 +36,9 @@ class MyDataObject extends DataObject {
 
 Run a flush=1 so that Silverstripe can pick up the new statics and the open the relevant screen in the admin showing your DataObject EditForm.
 If all goes well you should see the following, using the example above:
+
 1. When the values of 'SomeSecret' or 'AnAPIPassword' have not been provided, the field will have a Right Title of 'No value exists yet for this configuration entry'
+
 2. When the value of  'SomeSecret' is provided, that field will have a Right Title of 'A value exists for this configuration entry', the same will happen when a value for 'AnAPIPassword' is provided.
 
 ## Providers
