@@ -72,6 +72,13 @@ If you want to use this option, add it to the above like so:
 
 The IAM user with the relevant access_key and secret must have encrypt/decrypt privileges set up. You should not use your AWS root/admin user for this.
 
+## Decrypting
+When you wish to get the field value back, simply call decrypt() on your DataObject:
+```
+$plaintext = $instance->decrypt('SomeSecret');
+```
+You can then use that value in your application, e.g by passing it to an API.
+
 ## Field value truncation
 Encrypted values will be longer than the plain text version entered into the field.
 
