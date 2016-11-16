@@ -53,6 +53,9 @@ class HasSecrets extends \DataExtension {
 
 	public function updateCmsFields(\FieldList $fields) {
 		$secret_fields = $this->getSecretFields();
+		if(empty($secret_fields)) {
+			return;
+		}
 		if($this->owner->ID) {
 			$record = \DataObject::get( $this->owner->class )->filter('ID', $this->owner->ID)->setQueriedColumns( $secret_fields )->first();
 			foreach($secret_fields as $secret_field) {
