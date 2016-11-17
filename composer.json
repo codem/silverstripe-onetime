@@ -16,6 +16,6 @@
 	"require":
 	{
 		"silverstripe/framework": "~3.2",
-		"aws/aws-sdk-php": "~3.19"
+		"aws/aws-sdk-php": "~3.0"
 	}
 }
