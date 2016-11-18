@@ -43,8 +43,8 @@ class HasSecrets extends \DataExtension {
 	 */
 	public function decrypt($field) {
 		$fields = $this->getSecretFields();
-		if(!in_array($fields, $fields)) {
-			throw new \Exception("Field {$field} is not a valid configuration field");
+		if(!in_array($field, $fields)) {
+			throw new \Exception("Field {$field} is not a valid configuration field. Fields: ". json_encode($fields));
 		}
 		$provider = $this->getSecretsProvider();
 		if($provider != "Local") {
