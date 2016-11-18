@@ -33,6 +33,7 @@ class ProviderAmazonKMS extends BaseProvider {
 		// handle proxies
 		$proxy = getenv('HTTP_PROXY');
 		if($proxy) {
+			\SS_Log::log("Setting proxy {$proxy}", \SS_Log::DEBUG);
 			$args['http']['proxy'] = $proxy;
 		}
 
