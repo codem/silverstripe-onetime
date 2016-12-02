@@ -16,19 +16,26 @@ class ProviderAmazonKMS extends BaseProvider {
 	private static $encryption_context = array();
 
 	private function getClient() {
+		// these are optional, if not provided SDK will attempt to get creds from metadata server
 		$access_key = \Config::inst()->get('Codem\OneTime\ProviderAmazonKMS', 'access_key');
 		$secret = \Config::inst()->get('Codem\OneTime\ProviderAmazonKMS', 'secret');
+
+		// your AWS region
 		$aws_region = \Config::inst()->get('Codem\OneTime\ProviderAmazonKMS', 'aws_region');
 
 		$args = [
-			'credentials' => [
-				'key' => $access_key,
-				'secret' => $secret,
-			],
 			'region' => $aws_region,
 			'version' => '2014-11-01',//lock to this version
 			'proxy' => []
 		];
+
+		// access_key and secret provided
+		if(!empty($access_key) && !empty($secret)) {
+			$args['credentials'] = [
+				'key' => $access_key,
+				'secret' => $secret,
+			];
+		}
 
 		// handle proxies
 		$proxy = getenv('HTTP_PROXY');
