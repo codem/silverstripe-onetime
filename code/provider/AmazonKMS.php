@@ -52,12 +52,14 @@ class ProviderAmazonKMS extends BaseProvider {
 	 * Ref: https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-kms-2014-11-01.html
 	 * Ref: https://docs.aws.amazon.com/aws-sdk-php/v3/guide/guide/configuration.html
 	 */
-	public function encrypt($value) {
+	public function encrypt($value, $encryption_context = array()) {
 		$key_id = \Config::inst()->get('Codem\OneTime\ProviderAmazonKMS', 'key_id');
 		if(empty($key_id)) {
 			throw new \Exception("Cannot supply an empty key");
+		} 
+		if(empty($encryption_context)) {
+			$encryption_context = \Config::inst()->get('Codem\OneTime\ProviderAmazonKMS', 'encryption_context');
 		}
-		$encryption_context = \Config::inst()->get('Codem\OneTime\ProviderAmazonKMS', 'encryption_context');
 		$kms = $this->getClient();
 		$args = [
 			'KeyId' => $key_id,
@@ -73,7 +75,7 @@ class ProviderAmazonKMS extends BaseProvider {
 	/*
 	 * https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-kms-2014-11-01.html#decrypt
 	 */
-	public function decrypt($encrypted_value) {
+	public function decrypt($encrypted_value, $encryption_context = array()) {
 
 		$kms = $this->getClient();
 
@@ -82,7 +84,10 @@ class ProviderAmazonKMS extends BaseProvider {
 		    'CiphertextBlob' => base64_decode($encrypted_value),
 		];
 
-		$encryption_context = \Config::inst()->get('Codem\OneTime\ProviderAmazonKMS', 'encryption_context');
+		if(empty($encryption_context)) {
+			$encryption_context = \Config::inst()->get('Codem\OneTime\ProviderAmazonKMS', 'encryption_context');
+		}
+		
 		if(!empty( $encryption_context ) && is_array($encryption_context)) {
 			$args['EncryptionContext'] = $encryption_context;
 		}
