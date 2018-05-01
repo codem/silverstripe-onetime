@@ -20,7 +20,7 @@ class HasSecrets extends \DataExtension {
 	protected function getSecretsProvider() {
 		$provider = \Config::inst()->get( $this->owner->class, 'secrets_provider');
 		if(empty($provider)) {
-			throw new Exception('Provider not supplied in config');
+			throw new \Exception('Provider not supplied in config');
 		}
 		return $provider;
 	}
@@ -129,7 +129,7 @@ class HasSecrets extends \DataExtension {
 				if($this->owner->$altered_field_name != "") {
 					try {
 						$this->owner->$secret_field = $backend->encrypt($this->owner->$altered_field_name);
-					} catch (Exception $e) {
+					} catch (\Exception $e) {
 						\SS_Log::log("Encryption failed with error: " . $e->getMessage(), \SS_Log::NOTICE);
 					}
 				}
