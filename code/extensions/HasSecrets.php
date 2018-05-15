@@ -1,10 +1,19 @@
 <?php
 namespace Codem\OneTime;
+use Codem\Form\Field\PartialValueTextField;
+use Codem\Form\Field\NoValueTextField;
+use Codem\Form\Field\NoValueTextareaField;
+
 /**
  * HasSecrets
  * @note an extension for a @link{DataObject} that has one or more secret fields
  * 	To define that a DataObject has one or more secret fields, set a private static in the DataObject:
  *	<pre>
+ *	private static $onetime_field_schema = [
+ * 							'PrivateKey' => [ 'provider' => 'AmazonKMS', 'partial' => true ],
+ *							'Password' => [ 'provider' => 'Local', 'partial' => false ],
+ *							'SomethingElseThatShouldBeEncrypted' => [ 'provider' => 'Local', 'partial' => true ]
+ * ];
  *	private static $secret_fields = array('PrivateKey','Password','SomethingElseThatShouldBeEncrypted');
  *	private static $secrets_provider = 'AmazonKMS';// or 'Local'
  *	</pre>
@@ -13,10 +22,35 @@ namespace Codem\OneTime;
 class HasSecrets extends \DataExtension {
 
 	protected function getSecretFields() {
-		$secret_fields = \Config::inst()->get( $this->owner->class, 'secret_fields');
+		$secret_fields = [];
+		$field_schema = \Config::inst()->get( $this->owner->class, 'onetime_field_schema');
+		if(is_array($field_schema)) {
+			// use field schema, which provides more detailed setup
+			foreach($field_schema as $field_name => $meta) {
+				$secret_fields[ $field_name ] = [
+					'provider' => isset($meta['provider']) ? $meta['provider'] : 'Local',
+					'partial' => isset($meta['partial']) ? (bool)$meta['partial'] : false,
+					'partial_filter' => isset($meta['partial_filter']) ? $meta['partial_filter'] : '',
+				];
+			}
+		} else {
+			// fall back to simple schema, use the single configured provider with partial display off
+			$field_schema = \Config::inst()->get( $this->owner->class, 'secret_fields');
+			$provider = $this->getSecretsProvider();
+			foreach($field_schema as $field_name) {
+				$secret_fields[ $field_name ] = [
+					'provider' => $provider,
+					'partial' => false,
+					'partial_filter' => ''
+				];
+			}
+		}
 		return $secret_fields;
 	}
 
+	/**
+	 * @TODO only called from {@link getSecretFields}
+	 */
 	protected function getSecretsProvider() {
 		$provider = \Config::inst()->get( $this->owner->class, 'secrets_provider');
 		if(empty($provider)) {
@@ -24,9 +58,17 @@ class HasSecrets extends \DataExtension {
 		}
 		return $provider;
 	}
+	
+	protected function getProviderForField($field_data) {
+		return isset($field_data['provider']) ? $field_data['provider'] : '';
+	}
 
 	public static function getAlteredFieldName($field_name) {
-		return $field_name . '_HasSecret';
+		return $field_name . '[update]';
+	}
+	
+	public static function getClearFieldName($field_name) {
+		return $field_name . '[clear]';
 	}
 
 	public static function loadProvider($provider) {
@@ -43,107 +85,169 @@ class HasSecrets extends \DataExtension {
 	 */
 	public function decrypt($field) {
 		$fields = $this->getSecretFields();
-		if(!in_array($field, $fields)) {
+		if(!array_key_exists($field, $fields)) {
 			throw new \Exception("Field {$field} is not a valid configuration field. Fields: ". json_encode($fields));
 		}
-		$provider = $this->getSecretsProvider();
+		$provider = $this->getProviderForField($fields[ $field ]);
 		if($provider != "Local") {
 			$backend = self::loadProvider($provider);
 			return $backend->decrypt($this->owner->$field);
 		} else {
+			// Local: return value
 			return $this->owner->$field;
 		}
 	}
 
+	/**
+	 * Replace the field with relevant partial value fields
+	 */
 	public function updateCmsFields(\FieldList $fields) {
 		$secret_fields = $this->getSecretFields();
 		if(empty($secret_fields)) {
 			return;
 		}
-		if($this->owner->ID) {
-			$record = \DataObject::get( $this->owner->class )->filter('ID', $this->owner->ID)->setQueriedColumns( $secret_fields )->first();
-			foreach($secret_fields as $secret_field) {
-				$field = $fields->dataFieldByName($secret_field);
-				$altered_field_name = self::getAlteredFieldName($secret_field);
-				$field->setName($altered_field_name);
-				if($record->$secret_field != "") {
-					// value for field exists
-					$length = strlen($record->$secret_field);
-					$fields->dataFieldByName($altered_field_name)
-								->setRightTitle(
-										_t('OneTime.VALUEXISTS', 'A value exists for this configuration entry, clear it using the checkbox below')
-								);
-					$fields->insertAfter($altered_field_name, \CheckboxField::create($secret_field . "_CLEAR", _t('OneTime.CLEARVALUE', sprintf('Clear the \'%s\' value', $field->Title()) ) ) );
-				} else {
-					$fields->dataFieldByName($altered_field_name)
-								->setRightTitle(
-										_t('OneTime.VALUEXISTS', 'No value exists for this configuration entry')
-								);
-				}
-			}
-		} else {
-			foreach($secret_fields as $secret_field) {
-				$altered_field_name = self::getAlteredFieldName($secret_field);
-				$fields->dataFieldByName( $secret_field )
-								->setName($altered_field_name)
-								->setRightTitle( _t('OneTime.NOVALUE_EXISTS', 'No value exists yet for this configuration entry') );
+		
+		foreach($secret_fields as $field_name => $field_data) {
+			$field = $fields->dataFieldByName($field_name);
+			// TODO what happens if the field is not found?
+			if($field) {
+				$this->replaceField(
+					$fields,
+					$field,
+					$field_data['partial'],
+					$field_data['partial_filter']
+				);
 			}
 		}
+	}
+	
+	/**
+	 * Replace a field based on the field type and configuration
+	 * @param \FieldList $fields
+	 * @param \FormField $field
+	 * @param boolean $display_partial_value
+	 * @param string $partial_filter
+	 * @returns void
+	 */
+	private function replaceField(\FieldList $fields, \FormField $field, $display_partial_value = true, $partial_filter = "") {
+		
+		$field_name = $field->getName();
+		$altered_field_name = self::getAlteredFieldName($field_name);
+		$replacement_field_title = $field->Title();
+		
+		$fieldlist = \FieldList::create();
+		
+		if($field instanceof \TextareaField) {
+			$replacement_input_field = NoValueTextareaField::create($altered_field_name, $replacement_field_title);
+		} else if($display_partial_value) {
+			// partial value shown
+			$replacement_input_field = PartialValueTextField::create($altered_field_name, $replacement_field_title);
+		} else {
+			// default to TextField
+			$replacement_input_field = NoValueTextField::create($altered_field_name, $replacement_field_title);
+		}
+		
+		$fieldlist->push( $replacement_input_field );
+		$replacement_input_field->setName($altered_field_name);
+		
+		if(!$this->owner->ID) {
+			// new record
+			$replacement_input_field->setRightTitle( _t('OneTime.NOVALUE_EXISTS_YET', 'No value exists yet for this configuration entry') );
+		} else {
+			$record_value = (string)$this->owner->$field_name;
+			if($record_value !== "") {
+				
+				if($display_partial_value) {
+					$replacement_input_field->setDescription( _t('OneTime.CURRENTPARTIALVALUE', 'Value') . ": " . $replacement_input_field->getPartialValue( $record_value, $partial_filter) );
+				}
+				
+				$replacement_input_field->setRightTitle(
+					_t('OneTime.VALUEXISTS', 'A value exists for this configuration entry, clear it using the checkbox below')
+				);
+				$replacement_checkbox_field = \CheckboxField::create(
+					$this->getClearFieldName($field_name),
+					_t('OneTime.CLEARVALUE', sprintf('Clear the \'%s\' value', $field->Title()) )
+				);
+				
+				$fieldlist->push( $replacement_checkbox_field );
+				
+			} else {
+				$replacement_input_field->setRightTitle(
+					_t('OneTime.NOVALUEXISTS', "No value exists for this configuration entry")
+				);
+			}
+		}
+		
+		// Replace original field with our composite field
+		$fields->replaceField(
+			$field->getName(),
+			\CompositeField::create( $fieldlist )
+		);
+		
 	}
 
 	public function onAfterWrite() {
 		parent::onAfterWrite();
+		/*
 		$secret_fields = $this->getSecretFields();
-		foreach($secret_fields as $secret_field) {
-			$altered_field_name = self::getAlteredFieldName($secret_field);
-			$checkbox_field = $secret_field . "_CLEAR";
+		foreach($secret_fields as $field_name => $field_data) {
+			$altered_field_name = self::getAlteredFieldName($field_name);
+			$checkbox_field = $altered_field_name . "_CLEAR";
 			// avoid these showing on reload
-			$this->owner->$secret_field = "";
+			$this->owner->$field_name = "";
 			$this->owner->$altered_field_name = "";
 			// the checkbox field should always remain unchecked, even after being checked
 			$this->owner->$checkbox_field = 0;
 		}
-		return TRUE;
+		*/
+		return true;
 	}
 
 	public function onBeforeWrite() {
 		parent::onBeforeWrite();
+		
+		$controller = \Controller::curr();
+		$request = $controller->getRequest();
+		$post_data = $request->postVars();
+		
 		$secret_fields = $this->getSecretFields();
-		foreach($secret_fields as $secret_field) {
-			$altered_field_name = self::getAlteredFieldName($secret_field);
-			$checkbox_field = $secret_field . "_CLEAR";
-			if($this->owner->$checkbox_field == 1) {
+		foreach($secret_fields as $field_name => $field_data) {
+			
+			// get value for this request
+			$field_values = $request->postVar( $field_name );
+			$clear_value = isset($field_values['clear']) ? $field_values['clear'] : 0;
+			$updated_value = isset($field_values['update']) ? $field_values['update'] : '';
+			
+			$checkbox_field = $this->getClearFieldName($field_name);
+			// first check if the field was marked to be cleared
+			if($clear_value == 1) {
 				// both value should be emptied, even if provided
-				$this->owner->$secret_field = $this->owner->$altered_field_name = "";
+				$updated_value = $this->owner->$field_name = "";
+				\SS_Log::log("onBeforeWrite {$field_name} clear checkbox checked", \SS_Log::DEBUG);
 				$this->owner->$checkbox_field = 0;
 			}
-		}
-
-		// the value has been marked for clearance
-		$provider = $this->getSecretsProvider();
-		if($provider != "Local") {
-			// hand off to provider
-			$backend = self::loadProvider($provider);
-			foreach($secret_fields as $secret_field) {
-				$altered_field_name = self::getAlteredFieldName($secret_field);
-				if($this->owner->$altered_field_name != "") {
+			
+			// for non-cleared values, process the value provided
+			if($updated_value !== "") {
+				$provider = $field_data['provider'];
+				if($provider != "Local") {
+					\SS_Log::log("onBeforeWrite {$field_name} saving encrypted value {$updated_value}", \SS_Log::DEBUG);
+					// hand off to the provider that has an "encrypt" method
+					$backend = self::loadProvider($provider);
 					try {
-						$this->owner->$secret_field = $backend->encrypt($this->owner->$altered_field_name);
+						// store the encrypted value
+						$this->owner->$field_name = $backend->encrypt($updated_value);
 					} catch (\Exception $e) {
 						\SS_Log::log("Encryption failed with error: " . $e->getMessage(), \SS_Log::NOTICE);
 					}
-				}
-			}
-		} else {
-			// local storage in database
-			foreach($secret_fields as $secret_field) {
-				$altered_field_name = self::getAlteredFieldName($secret_field);
-				if($this->owner->$altered_field_name != "") {
-					$this->owner->$secret_field = $this->owner->$altered_field_name;
+				} else {
+					\SS_Log::log("onBeforeWrite {$field_name} saving local value {$updated_value}", \SS_Log::DEBUG);
+					// local storage in database
+					$this->owner->$field_name = $updated_value;
 				}
 			}
 		}
-		return TRUE;
+		return true;
 	}
 
 }
