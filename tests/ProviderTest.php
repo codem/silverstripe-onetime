@@ -1,10 +1,6 @@
 <?php
 namespace Codem\OneTime;
 use Aws\Kms\Exception\KmsException;
-/**
- * Test various providers within OneTime
- * Hint: /path/to/php -q ./vendor/bin/phpunit --filter testAmazonKMS ./onetime/tests/ProviderTest.php
- */
 class ProviderTest extends \SapphireTest {
     
     /**
@@ -21,7 +17,6 @@ class ProviderTest extends \SapphireTest {
     
     /**
      * Test for the AmazonKMS provider
-     * @todo support per request encryption context in tests
      */
     public function testAmazonKMS() {
         $plain = "Just a test";
@@ -48,12 +43,12 @@ class ProviderTest extends \SapphireTest {
         
         try {
             //this should fail with an Aws\Kms\Exception\KmsException
-            // we should not be allowed to pass > 4096 byte strings to KMS
+            // test with 4096 bytes of data
             $long_plain_string = str_repeat('a', 4097);
             // @returns base64 encoded string of the encrypted plain text
             $encrypted = $inst->encrypt($long_plain_string);
-            // if here, maybe the limits have changed?
-            $this->assertTrue(false);
+            // we should not be allowed to pass > 4096 byte strings to KMS
+            $this->assertEquals(false, true);
         } catch (\Exception $e) {
             $this->assertTrue($e instanceof KmsException);
         }
