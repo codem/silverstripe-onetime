@@ -30,7 +30,7 @@ class HasSecrets extends \DataExtension {
 	}
 
 	public static function loadProvider($provider) {
-		$provider_class_name = "Codem\OneTime\Provider{$provider}";
+		$provider_class_name = "Codem\OneTime\Provider\{$provider}";
 		if(!class_exists($provider_class_name)) {
 			throw new \Exception("Provider {$provider} does not exist");
 		}
