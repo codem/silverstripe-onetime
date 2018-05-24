@@ -68,7 +68,6 @@ class HasSecrets extends \DataExtension {
 				$field->setName($altered_field_name);
 				if($record->$secret_field != "") {
 					// value for field exists
-					$length = strlen($record->$secret_field);
 					$fields->dataFieldByName($altered_field_name)
 								->setRightTitle(
 										_t('OneTime.VALUEXISTS', 'A value exists for this configuration entry, clear it using the checkbox below')
