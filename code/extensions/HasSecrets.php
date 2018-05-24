@@ -6,7 +6,7 @@ use Codem\Form\Field\NoValueTextareaField;
 
 /**
  * HasSecrets
- * @note an extension for a @link{DataObject} that has one or more secret fields
+ * @note an extension for a {@link DataObject} that has one or more secret fields
  * 	To define that a DataObject has one or more secret fields, set a private static in the DataObject:
  *	<pre>
  *	private static $onetime_field_schema = [
@@ -14,10 +14,13 @@ use Codem\Form\Field\NoValueTextareaField;
  *							'Password' => [ 'provider' => 'Local', 'partial' => false ],
  *							'SomethingElseThatShouldBeEncrypted' => [ 'provider' => 'Local', 'partial' => true ]
  * ];
+ *  Previous versions supported this configuration which is now deprecated:
+ * <pre>
  *	private static $secret_fields = array('PrivateKey','Password','SomethingElseThatShouldBeEncrypted');
  *	private static $secrets_provider = 'AmazonKMS';// or 'Local'
  *	</pre>
- *	This extension will do the rest. A number of backends are present: the database and Amazon KMS
+ * This extension will do the rest.
+ * A number of backends are present: the database (Local) and Amazon KMS (AmazonKMS)
  */
 class HasSecrets extends \DataExtension {
 
@@ -58,7 +61,7 @@ class HasSecrets extends \DataExtension {
 		}
 		return $provider;
 	}
-	
+
 	protected function getProviderForField($field_data) {
 		return isset($field_data['provider']) ? $field_data['provider'] : '';
 	}
@@ -66,7 +69,7 @@ class HasSecrets extends \DataExtension {
 	public static function getAlteredFieldName($field_name) {
 		return $field_name . '[update]';
 	}
-	
+
 	public static function getClearFieldName($field_name) {
 		return $field_name . '[clear]';
 	}
@@ -106,7 +109,7 @@ class HasSecrets extends \DataExtension {
 		if(empty($secret_fields)) {
 			return;
 		}
-		
+
 		foreach($secret_fields as $field_name => $field_data) {
 			$field = $fields->dataFieldByName($field_name);
 			// TODO what happens if the field is not found?
@@ -120,7 +123,7 @@ class HasSecrets extends \DataExtension {
 			}
 		}
 	}
-	
+
 	/**
 	 * Replace a field based on the field type and configuration
 	 * @param \FieldList $fields
@@ -130,13 +133,13 @@ class HasSecrets extends \DataExtension {
 	 * @returns void
 	 */
 	private function replaceField(\FieldList $fields, \FormField $field, $display_partial_value = true, $partial_filter = "") {
-		
+
 		$field_name = $field->getName();
 		$altered_field_name = self::getAlteredFieldName($field_name);
 		$replacement_field_title = $field->Title();
-		
+
 		$fieldlist = \FieldList::create();
-		
+
 		if($field instanceof \TextareaField) {
 			$replacement_input_field = NoValueTextareaField::create($altered_field_name, $replacement_field_title);
 		} else if($display_partial_value) {
@@ -146,21 +149,21 @@ class HasSecrets extends \DataExtension {
 			// default to TextField
 			$replacement_input_field = NoValueTextField::create($altered_field_name, $replacement_field_title);
 		}
-		
+
 		$fieldlist->push( $replacement_input_field );
 		$replacement_input_field->setName($altered_field_name);
-		
+
 		if(!$this->owner->ID) {
 			// new record
 			$replacement_input_field->setRightTitle( _t('OneTime.NOVALUE_EXISTS_YET', 'No value exists yet for this configuration entry') );
 		} else {
 			$record_value = (string)$this->owner->$field_name;
 			if($record_value !== "") {
-				
+
 				if($display_partial_value) {
 					$replacement_input_field->setDescription( _t('OneTime.CURRENTPARTIALVALUE', 'Value') . ": " . $replacement_input_field->getPartialValue( $record_value, $partial_filter) );
 				}
-				
+
 				$replacement_input_field->setRightTitle(
 					_t('OneTime.VALUEXISTS', 'A value exists for this configuration entry, clear it using the checkbox below')
 				);
@@ -168,22 +171,22 @@ class HasSecrets extends \DataExtension {
 					$this->getClearFieldName($field_name),
 					_t('OneTime.CLEARVALUE', sprintf('Clear the \'%s\' value', $field->Title()) )
 				);
-				
+
 				$fieldlist->push( $replacement_checkbox_field );
-				
+
 			} else {
 				$replacement_input_field->setRightTitle(
 					_t('OneTime.NOVALUEXISTS', "No value exists for this configuration entry")
 				);
 			}
 		}
-		
+
 		// Replace original field with our composite field
 		$fields->replaceField(
 			$field->getName(),
 			\CompositeField::create( $fieldlist )
 		);
-		
+
 	}
 
 	public function onAfterWrite() {
@@ -205,19 +208,19 @@ class HasSecrets extends \DataExtension {
 
 	public function onBeforeWrite() {
 		parent::onBeforeWrite();
-		
+
 		$controller = \Controller::curr();
 		$request = $controller->getRequest();
 		$post_data = $request->postVars();
-		
+
 		$secret_fields = $this->getSecretFields();
 		foreach($secret_fields as $field_name => $field_data) {
-			
+
 			// get value for this request
 			$field_values = $request->postVar( $field_name );
 			$clear_value = isset($field_values['clear']) ? $field_values['clear'] : 0;
 			$updated_value = isset($field_values['update']) ? $field_values['update'] : '';
-			
+
 			$checkbox_field = $this->getClearFieldName($field_name);
 			// first check if the field was marked to be cleared
 			if($clear_value == 1) {
@@ -226,7 +229,7 @@ class HasSecrets extends \DataExtension {
 				\SS_Log::log("onBeforeWrite {$field_name} clear checkbox checked", \SS_Log::DEBUG);
 				$this->owner->$checkbox_field = 0;
 			}
-			
+
 			// for non-cleared values, process the value provided
 			if($updated_value !== "") {
 				$provider = $field_data['provider'];
