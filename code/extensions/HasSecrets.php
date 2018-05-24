@@ -164,15 +164,12 @@ class HasSecrets extends \DataExtension {
 					$replacement_input_field->setDescription( _t('OneTime.CURRENTPARTIALVALUE', 'Value') . ": " . $replacement_input_field->getPartialValue( $record_value, $partial_filter) );
 				}
 
-				$replacement_input_field->setRightTitle(
-					_t('OneTime.VALUEXISTS', 'A value exists for this configuration entry, clear it using the checkbox below')
-				);
 				$replacement_checkbox_field = \CheckboxField::create(
 					$this->getClearFieldName($field_name),
-					_t('OneTime.CLEARVALUE', sprintf('Clear the \'%s\' value', $field->Title()) )
+					_t('OneTime.CLEARVALUE', 'Clear the saved value' )
 				);
 
-				$fieldlist->push( $replacement_checkbox_field );
+				$replacement_input_field->setCheckbox( $replacement_checkbox_field );
 
 			} else {
 				$replacement_input_field->setRightTitle(
@@ -184,7 +181,7 @@ class HasSecrets extends \DataExtension {
 		// Replace original field with our composite field
 		$fields->replaceField(
 			$field->getName(),
-			\CompositeField::create( $fieldlist )
+			$replacement_input_field
 		);
 
 	}

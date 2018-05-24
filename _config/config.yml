@@ -1,0 +1,17 @@
+---
+Name: onetime
+---
+Codem\OneTime\PartialValue:
+  min_characters_replaced : 6
+  max_characters_replaced : 18
+  percent_cleared : 80
+  replacement_character: '*'
+Varchar:
+  extensions:
+    - 'Codem\FieldTypes\PartialText'
+Text:
+  extensions:
+    - 'Codem\FieldTypes\PartialText'
+StringField:
+  extensions:
+    - 'Codem\FieldTypes\PartialText'
