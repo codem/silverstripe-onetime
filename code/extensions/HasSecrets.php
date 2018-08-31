@@ -3,6 +3,15 @@ namespace Codem\OneTime;
 use Codem\Form\Field\PartialValueTextField;
 use Codem\Form\Field\NoValueTextField;
 use Codem\Form\Field\NoValueTextareaField;
+use DataExtension;
+use Config;
+use Exception;
+use FieldList;
+use FormField;
+use TextareaField;
+use CheckboxField;
+use Controller;
+use SS_Log;
 
 /**
  * HasSecrets
@@ -22,11 +31,11 @@ use Codem\Form\Field\NoValueTextareaField;
  * This extension will do the rest.
  * A number of backends are present: the database (Local) and Amazon KMS (AmazonKMS)
  */
-class HasSecrets extends \DataExtension {
+class HasSecrets extends DataExtension {
 
 	protected function getSecretFields() {
 		$secret_fields = [];
-		$field_schema = \Config::inst()->get( $this->owner->class, 'onetime_field_schema');
+		$field_schema = Config::inst()->get( $this->owner->class, 'onetime_field_schema');
 		if(is_array($field_schema)) {
 			// use field schema, which provides more detailed setup
 			foreach($field_schema as $field_name => $meta) {
@@ -37,8 +46,8 @@ class HasSecrets extends \DataExtension {
 				];
 			}
 		} else {
-			// fall back to simple schema, use the single configured provider with partial display off
-			$field_schema = \Config::inst()->get( $this->owner->class, 'secret_fields');
+			// fall back to deprecated simple schema, use the single configured provider with partial display off
+			$field_schema = Config::inst()->get( $this->owner->class, 'secret_fields');
 			$provider = $this->getSecretsProvider();
 			foreach($field_schema as $field_name) {
 				$secret_fields[ $field_name ] = [
@@ -55,9 +64,9 @@ class HasSecrets extends \DataExtension {
 	 * @TODO only called from {@link getSecretFields}
 	 */
 	protected function getSecretsProvider() {
-		$provider = \Config::inst()->get( $this->owner->class, 'secrets_provider');
+		$provider = Config::inst()->get( $this->owner->class, 'secrets_provider');
 		if(empty($provider)) {
-			throw new \Exception('Provider not supplied in config');
+			throw new Exception('Provider not supplied in config');
 		}
 		return $provider;
 	}
@@ -77,7 +86,7 @@ class HasSecrets extends \DataExtension {
 	public static function loadProvider($provider) {
 		$provider_class_name = "Codem\OneTime\Provider{$provider}";
 		if(!class_exists($provider_class_name)) {
-			throw new \Exception("Provider {$provider} does not exist");
+			throw new Exception("Provider {$provider} does not exist");
 		}
 		$instance = new $provider_class_name;
 		return $instance;
@@ -89,7 +98,7 @@ class HasSecrets extends \DataExtension {
 	public function decrypt($field) {
 		$fields = $this->getSecretFields();
 		if(!array_key_exists($field, $fields)) {
-			throw new \Exception("Field {$field} is not a valid configuration field. Fields: ". json_encode($fields));
+			throw new Exception("Field {$field} is not a valid configuration field. Fields: ". json_encode($fields));
 		}
 		$provider = $this->getProviderForField($fields[ $field ]);
 		if($provider != "Local") {
@@ -104,7 +113,7 @@ class HasSecrets extends \DataExtension {
 	/**
 	 * Replace the field with relevant partial value fields
 	 */
-	public function updateCmsFields(\FieldList $fields) {
+	public function updateCmsFields(FieldList $fields) {
 		$secret_fields = $this->getSecretFields();
 		if(empty($secret_fields)) {
 			return;
@@ -126,21 +135,21 @@ class HasSecrets extends \DataExtension {
 
 	/**
 	 * Replace a field based on the field type and configuration
-	 * @param \FieldList $fields
-	 * @param \FormField $field
+	 * @param FieldList $fields
+	 * @param FormField $field
 	 * @param boolean $display_partial_value
 	 * @param string $partial_filter
 	 * @returns void
 	 */
-	private function replaceField(\FieldList $fields, \FormField $field, $display_partial_value = true, $partial_filter = "") {
+	private function replaceField(FieldList $fields, FormField $field, $display_partial_value = true, $partial_filter = "") {
 
 		$field_name = $field->getName();
 		$altered_field_name = self::getAlteredFieldName($field_name);
 		$replacement_field_title = $field->Title();
 
-		$fieldlist = \FieldList::create();
+		$fieldlist = FieldList::create();
 
-		if($field instanceof \TextareaField) {
+		if($field instanceof TextareaField) {
 			$replacement_input_field = NoValueTextareaField::create($altered_field_name, $replacement_field_title);
 		} else if($display_partial_value) {
 			// partial value shown
@@ -164,7 +173,7 @@ class HasSecrets extends \DataExtension {
 					$replacement_input_field->setDescription( _t('OneTime.CURRENTPARTIALVALUE', 'Value') . ": " . $replacement_input_field->getPartialValue( $record_value, $partial_filter) );
 				}
 
-				$replacement_checkbox_field = \CheckboxField::create(
+				$replacement_checkbox_field = CheckboxField::create(
 					$this->getClearFieldName($field_name),
 					_t('OneTime.CLEARVALUE', 'Clear the saved value' )
 				);
@@ -206,7 +215,7 @@ class HasSecrets extends \DataExtension {
 	public function onBeforeWrite() {
 		parent::onBeforeWrite();
 
-		$controller = \Controller::curr();
+		$controller = Controller::curr();
 		$request = $controller->getRequest();
 		$post_data = $request->postVars();
 
@@ -223,7 +232,7 @@ class HasSecrets extends \DataExtension {
 			if($clear_value == 1) {
 				// both value should be emptied, even if provided
 				$updated_value = $this->owner->$field_name = "";
-				\SS_Log::log("onBeforeWrite {$field_name} clear checkbox checked", \SS_Log::DEBUG);
+				SS_Log::log("onBeforeWrite {$field_name} clear checkbox checked", SS_Log::DEBUG);
 				$this->owner->$checkbox_field = 0;
 			}
 
@@ -231,17 +240,17 @@ class HasSecrets extends \DataExtension {
 			if($updated_value !== "") {
 				$provider = $field_data['provider'];
 				if($provider != "Local") {
-					\SS_Log::log("onBeforeWrite {$field_name} saving encrypted value {$updated_value}", \SS_Log::DEBUG);
+					SS_Log::log("onBeforeWrite {$field_name} saving encrypted value {$updated_value}", SS_Log::DEBUG);
 					// hand off to the provider that has an "encrypt" method
 					$backend = self::loadProvider($provider);
 					try {
 						// store the encrypted value
 						$this->owner->$field_name = $backend->encrypt($updated_value);
-					} catch (\Exception $e) {
-						\SS_Log::log("Encryption failed with error: " . $e->getMessage(), \SS_Log::NOTICE);
+					} catch (Exception $e) {
+						SS_Log::log("Encryption failed with error: " . $e->getMessage(), SS_Log::NOTICE);
 					}
 				} else {
-					\SS_Log::log("onBeforeWrite {$field_name} saving local value {$updated_value}", \SS_Log::DEBUG);
+					SS_Log::log("onBeforeWrite {$field_name} saving local value {$updated_value}", SS_Log::DEBUG);
 					// local storage in database
 					$this->owner->$field_name = $updated_value;
 				}

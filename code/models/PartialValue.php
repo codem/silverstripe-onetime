@@ -1,7 +1,8 @@
 <?php
 namespace Codem\OneTime;
+use Object;
 
-class PartialValue extends \Object {
+class PartialValue extends Object {
 
   const FILTER_HIDE_MIDDLE = 'filter_hide_middle';
 

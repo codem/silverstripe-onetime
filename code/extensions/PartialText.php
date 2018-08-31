@@ -1,8 +1,9 @@
 <?php
 namespace Codem\FieldTypes;
 use Codem\OneTime\PartialValue;
+use Extension;
 
-class PartialText extends \Extension {
+class PartialText extends Extension {
 
   public function Partial() {
     $pv = new PartialValue();

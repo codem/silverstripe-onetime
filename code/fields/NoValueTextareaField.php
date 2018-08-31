@@ -1,6 +1,9 @@
 <?php
 namespace Codem\Form\Field;
-class NoValueTextareaField extends \TextareaField implements NoValueFieldInteface {
+use TextareaField;
+use CheckboxField;
+
+class NoValueTextareaField extends TextareaField implements NoValueFieldInteface {
 
 	/**
 	 * {@inheritdoc}
@@ -14,7 +17,7 @@ class NoValueTextareaField extends \TextareaField implements NoValueFieldIntefac
 		$this->setFieldHolderTemplate('NoValueTextareaField_holder');
 	}
 
-	public function setCheckbox(\CheckboxField $checkbox) {
+	public function setCheckbox(CheckboxField $checkbox) {
 		$this->checkbox = $checkbox;
 		$this->checkbox->setFieldHolderTemplate('CheckboxField_holder_small');
 	}
@@ -37,7 +40,7 @@ class NoValueTextareaField extends \TextareaField implements NoValueFieldIntefac
 		return $this;
 	}
 
-	public function setClearBox(\CheckboxField $field) {
+	public function setClearBox(CheckboxField $field) {
 		$this->clearBox = $field;
 	}
 

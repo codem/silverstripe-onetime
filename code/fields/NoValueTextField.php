@@ -1,6 +1,9 @@
 <?php
 namespace Codem\Form\Field;
-class NoValueTextField extends \TextField implements NoValueFieldInteface {
+use TextField;
+use CheckboxField;
+
+class NoValueTextField extends TextField implements NoValueFieldInteface {
 
 	protected $fieldHolderTemplate = "NoValueTextField_holder";
 
@@ -15,7 +18,7 @@ class NoValueTextField extends \TextField implements NoValueFieldInteface {
 		parent::__construct($name, $title, '', $maxLength, $form);
 	}
 
-	public function setCheckbox(\CheckboxField $checkbox) {
+	public function setCheckbox(CheckboxField $checkbox) {
 		$this->checkbox = $checkbox;
 		$this->checkbox->setFieldHolderTemplate('CheckboxField_holder_small');
 	}
