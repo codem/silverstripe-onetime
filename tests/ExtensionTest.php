@@ -15,6 +15,11 @@ class ExtensionTest extends \FunctionalTest {
 
   protected $usesDatabase = true;
 
+  protected $extraDataObjects = [
+    TestKmsDataObject::class,
+    TestLocalDataObject::class
+  ];
+
   public function testKmsFormSubmission() {
 
     \Object::add_extension('Codem\OneTime\TestKmsDataObject','Codem\OneTime\HasSecrets');
@@ -261,7 +266,7 @@ class OneTimeKmsTestController extends \Controller implements \TestOnly {
 /**
  * Test DataObject for KMS values
  */
-class TestKmsDataObject extends \DataObject {
+class TestKmsDataObject extends \DataObject implements \TestOnly {
   private static $secret_fields = array('FieldTestOne','FieldTestTwo');
   private static $secrets_provider = 'AmazonKMS';
 
@@ -322,7 +327,7 @@ class OneTimeLocalTestController extends \Controller implements \TestOnly {
 /**
  * DataObject for Local
  */
-class TestLocalDataObject extends \DataObject {
+class TestLocalDataObject extends \DataObject implements \TestOnly {
   private static $secret_fields = array('FieldTestOne','FieldTestTwo');
   private static $secrets_provider = 'Local';
 
