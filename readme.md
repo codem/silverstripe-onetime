@@ -101,7 +101,7 @@ If you want to use this option, add it to the above configuration like so:
     AContextKey: 'some_context_value'
 ```
 
-Read [https://docs.aws.amazon.com/kms/latest/developerguide/encryption-context.html](Encryption Context documentation) at AWS for more information.
+Read [Encryption Context documentation](https://docs.aws.amazon.com/kms/latest/developerguide/encryption-context.html) at AWS for more information.
 
 ## Decrypting
 When you wish to get the field value back, simply call decrypt() on your DataObject:
