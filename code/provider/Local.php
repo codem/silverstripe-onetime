@@ -1,10 +1,10 @@
 <?php
-namespace Codem\OneTime\Provider;
-use Codem\OneTime\BaseProvider as BaseProvider;
+namespace Codem\OneTime;
+
 /**
  * Local provider
  */
-class Local extends BaseProvider {
+class ProviderLocal extends BaseProvider {
 	public function encrypt($value) {
 		return $value;
 	}
