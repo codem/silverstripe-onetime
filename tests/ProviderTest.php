@@ -5,6 +5,10 @@ use Aws\Kms\Exception\KmsException;
 class ProviderTest extends \SapphireTest {
 
   protected $usesDatabase = true;
+  
+  protected $extraDataObjects = [
+    TestProviderKmsDataObject::class
+  ];
 
   /**
    * Test for the local provider, which shouldn't do anything to the values
@@ -124,7 +128,7 @@ class ProviderTest extends \SapphireTest {
   }
 }
 
-class TestProviderKmsDataObject extends \DataObject {
+class TestProviderKmsDataObject extends \DataObject implements \TestOnly {
   private static $secret_fields = array('FieldTestOne','FieldTestTwo');
   private static $secrets_provider = 'AmazonKMS';
 
