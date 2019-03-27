@@ -22,4 +22,8 @@ class PartialValueTextField extends NoValueTextField
         $pv = new PartialValue();
         return $pv->get($value, $filter);
     }
+
+    public function supportsPartialValueDisplay() {
+        return true;
+    }
 }

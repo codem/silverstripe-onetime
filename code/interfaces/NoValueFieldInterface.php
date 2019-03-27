@@ -7,4 +7,5 @@ interface NoValueFieldInteface
 {
     public function setCheckbox(CheckboxField $checkbox);
     public function Checkbox();
+    public function supportsPartialValueDisplay();
 }

@@ -52,4 +52,8 @@ class NoValueTextField extends TextField implements NoValueFieldInteface
     {
         return "";
     }
+
+    public function supportsPartialValueDisplay() {
+        return false;
+    }
 }
