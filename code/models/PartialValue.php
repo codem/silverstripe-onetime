@@ -20,12 +20,12 @@ class PartialValue extends Object
      */
     public function get($value, $filter = '')
     {
-        $replacement_character = $this->config()->replacement_character;
-        $min = $this->config()->min_characters_replaced;
-        $max = $this->config()->max_characters_replaced;
-        $max_characters_exposed = $this->config()->max_characters_exposed;
+        $replacement_character = $this->config()->get('replacement_character');
+        $min = $this->config()->get('min_characters_replaced');
+        $max = $this->config()->get('max_characters_replaced');
+        $max_characters_exposed = $this->config()->get('max_characters_exposed');
 
-        $percent_cleared = $this->config()->percent_cleared;
+        $percent_cleared = $this->config()->get('percent_cleared');
         $partial_value = "";
         $length = mb_strlen($value);
 
