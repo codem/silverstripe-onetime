@@ -32,7 +32,7 @@ class PartialValue extends Object
         switch ($filter) {
             case self::FILTER_HIDE_MIDDLE:
                 // this rule shows the first/last 3 characters
-                $pattern = "/^(.{3})(.+)(.{3})$/";
+                $pattern = "/^(.{3})(.+)(.{6})$/";
                 $result = preg_match($pattern, $value, $matches);
                 if ($result == 1 && count($matches) == 4) {
                     $replacement_length = mb_strlen($matches[2]);
