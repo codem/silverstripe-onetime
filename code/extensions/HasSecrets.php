@@ -159,6 +159,7 @@ class HasSecrets extends DataExtension
         $fieldlist = FieldList::create();
 
         if ($field instanceof TextareaField) {
+            // Textarea Fields by default use NoValueTextareaField
             $replacement_input_field = NoValueTextareaField::create($altered_field_name, $replacement_field_title);
         } elseif ($display_partial_value) {
             // partial value shown
@@ -177,16 +178,31 @@ class HasSecrets extends DataExtension
         } else {
             $record_value = (string)$this->owner->$field_name;
             if ($record_value !== "") {
-                if ($display_partial_value) {
-                    $replacement_input_field->setDescription(_t('OneTime.CURRENTPARTIALVALUE', 'Value') . ": " . $replacement_input_field->getPartialValue($record_value, $partial_filter));
+                if ($display_partial_value && $replacement_input_field->supportsPartialValueDisplay()) {
+                    $decrypted = "";
+                    try {
+                        $decrypted = $this->decrypt($field_name);
+                    } catch (Exception $e) {
+                        // could not decrypt
+                    }
+                    $replacement_input_field->setDescription(
+                        _t('OneTime.CURRENTPARTIALVALUE', 'Value (concealed)')
+                         . ": "
+                         . $replacement_input_field->getPartialValue($decrypted, $partial_filter)
+                    );
+                } else {
+                    $replacement_input_field->setDescription(
+                        _t('OneTime.VALUEXISTS', "A value exists for this configuration entry")
+                    );
                 }
 
                 $replacement_checkbox_field = CheckboxField::create(
                     $this->getClearFieldName($field_name),
-                    _t('OneTime.CLEARVALUE', 'Clear the saved value')
+                    _t('OneTime.CLEARVALUE', 'Clear this value on save')
                 );
 
                 $replacement_input_field->setCheckbox($replacement_checkbox_field);
+
             } else {
                 $replacement_input_field->setRightTitle(
                     _t('OneTime.NOVALUEXISTS', "No value exists for this configuration entry")
