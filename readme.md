@@ -114,10 +114,10 @@ If you want to use this option, add it to the above configuration like so:
 Read [Encryption Context documentation](https://docs.aws.amazon.com/kms/latest/developerguide/encryption-context.html) at AWS for more information.
 
 ## Decrypting
-When you wish to get the field value back, simply call decrypt() on your DataObject:
+When you wish to get the field value back, simply call decrypt() on your DataObject. The argument is the field name.
 ```
 $instance = MyDataObject::get()->byId(1);
-$plaintext = $instance->decrypt('SomeEncryptedSecret');
+$plaintext = $instance->decrypt('SomeFieldNameWithEncryptedValue');
 ```
 You can then use that value in your application, e.g by passing it to an API.
 
