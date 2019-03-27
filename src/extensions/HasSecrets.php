@@ -272,6 +272,7 @@ class HasSecrets extends DataExtension
                         $this->owner->$field_name = $backend->encrypt($updated_value);
                     } catch (Exception $e) {
                         // SS_Log::log("Encryption failed with error: " . $e->getMessage(), SS_Log::NOTICE);
+                        $this->owner->$field_name = "";// ensure the value is empty if it cannot be encrypted
                     }
                 } else {
                     // local storage in database
