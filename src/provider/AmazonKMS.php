@@ -21,11 +21,11 @@ class ProviderAmazonKMS extends BaseProvider
     private function getClient()
     {
         // these are optional, if not provided SDK will attempt to get creds from metadata server
-        $access_key = Config::inst()->get('Codem\OneTime\ProviderAmazonKMS', 'access_key');
-        $secret = Config::inst()->get('Codem\OneTime\ProviderAmazonKMS', 'secret');
+        $access_key = Config::inst()->get(ProviderAmazonKMS::class, 'access_key');
+        $secret = Config::inst()->get(ProviderAmazonKMS::class, 'secret');
 
         // your AWS region
-        $aws_region = Config::inst()->get('Codem\OneTime\ProviderAmazonKMS', 'aws_region');
+        $aws_region = Config::inst()->get(ProviderAmazonKMS::class, 'aws_region');
 
         $args = [
             'region' => $aws_region,
@@ -57,12 +57,12 @@ class ProviderAmazonKMS extends BaseProvider
      */
     public function encrypt($value, $encryption_context = array())
     {
-        $key_id = Config::inst()->get('Codem\OneTime\ProviderAmazonKMS', 'key_id');
+        $key_id = Config::inst()->get(ProviderAmazonKMS::class, 'key_id');
         if (empty($key_id)) {
             throw new Exception("Cannot supply an empty key");
         }
         if (empty($encryption_context)) {
-            $encryption_context = Config::inst()->get('Codem\OneTime\ProviderAmazonKMS', 'encryption_context');
+            $encryption_context = Config::inst()->get(ProviderAmazonKMS::class, 'encryption_context');
         }
         $kms = $this->getClient();
         $args = [
@@ -89,7 +89,7 @@ class ProviderAmazonKMS extends BaseProvider
         ];
 
         if (empty($encryption_context)) {
-            $encryption_context = Config::inst()->get('Codem\OneTime\ProviderAmazonKMS', 'encryption_context');
+            $encryption_context = Config::inst()->get(ProviderAmazonKMS::class, 'encryption_context');
         }
 
         if (!empty($encryption_context) && is_array($encryption_context)) {
