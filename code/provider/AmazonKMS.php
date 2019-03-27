@@ -4,7 +4,6 @@ namespace Codem\OneTime;
 use Aws\Kms\KmsClient as KmsClient;
 use Config;
 use Exception;
-use SS_Log;
 
 /**
  * AmazonKMS provider for encrypting and decrypting data
@@ -45,7 +44,6 @@ class ProviderAmazonKMS extends BaseProvider
         // handle proxies
         $proxy = getenv('HTTP_PROXY');
         if ($proxy) {
-            SS_Log::log("Setting proxy {$proxy}", SS_Log::DEBUG);
             $args['http']['proxy'] = $proxy;
         }
 

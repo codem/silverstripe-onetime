@@ -256,7 +256,6 @@ class HasSecrets extends DataExtension
             if ($clear_value == 1) {
                 // both value should be emptied, even if provided
                 $updated_value = $this->owner->$field_name = "";
-                SS_Log::log("onBeforeWrite {$field_name} clear checkbox checked", SS_Log::DEBUG);
                 $this->owner->$checkbox_field = 0;
             }
 
@@ -264,7 +263,6 @@ class HasSecrets extends DataExtension
             if ($updated_value !== "") {
                 $provider = $field_data['provider'];
                 if ($provider != "Local") {
-                    SS_Log::log("onBeforeWrite {$field_name} saving encrypted value {$updated_value}", SS_Log::DEBUG);
                     // hand off to the provider that has an "encrypt" method
                     $backend = self::loadProvider($provider);
                     try {
@@ -274,7 +272,6 @@ class HasSecrets extends DataExtension
                         SS_Log::log("Encryption failed with error: " . $e->getMessage(), SS_Log::NOTICE);
                     }
                 } else {
-                    SS_Log::log("onBeforeWrite {$field_name} saving local value {$updated_value}", SS_Log::DEBUG);
                     // local storage in database
                     $this->owner->$field_name = $updated_value;
                 }
