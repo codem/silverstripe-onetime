@@ -1,0 +1,12 @@
+Codem\OneTime\Tests\TestLocalPage:
+  local:
+    Title: 'Local Testing Page'
+    URLSegment: 'local-test-page'
+Codem\OneTime\Tests\TestClearPage:
+  clear:
+    Title: 'Clear Testing Page'
+    URLSegment: 'clear-test-page'
+Codem\OneTime\Tests\TestKmsPage:
+  kms:
+    Title: 'KMS Testing Page'
+    URLSegment: 'kms-test-page'
