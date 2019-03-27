@@ -48,7 +48,7 @@ class MyDataObject extends DataObject {
     'TextFieldEmpty' => [ 'provider' => 'Local', 'partial' => false ],
 
     // store the value encrypted with your KMS configuration
-    'TextFieldPartial' => [ 'provider' => 'AmazonKMS', 'partial' => true, 'partial_filter' =>  Codem\OneTime\PartialValue::FILTER_HIDE_MIDDLE ],
+    'TextFieldPartial' => [ 'provider' => 'AmazonKMS', 'partial' => true, 'partial_filter' =>  \Codem\OneTime\PartialValue::FILTER_HIDE_MIDDLE ],
     'TextFieldPartialDefault' => [ 'provider' => 'Local', 'partial' => true ],
     'TextareaFieldEmpty' => [ 'provider' => 'AmazonKMS', 'partial' => false ]
   ];
