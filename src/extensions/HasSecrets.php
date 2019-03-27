@@ -4,15 +4,15 @@ namespace Codem\OneTime;
 use Codem\Form\Field\PartialValueTextField;
 use Codem\Form\Field\NoValueTextField;
 use Codem\Form\Field\NoValueTextareaField;
-use DataExtension;
-use Config;
+use SilverStripe\ORM\DataExtension;
+use SilverStripe\Core\Config\Config;
 use Exception;
-use FieldList;
-use FormField;
-use TextareaField;
-use CheckboxField;
-use Controller;
-use SS_Log;
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\FormField;
+use SilverStripe\Forms\TextareaField;
+use SilverStripe\Forms\CheckboxField;
+use SilverStripe\Control\Controller;
+// use SS_Log;
 
 /**
  * HasSecrets
@@ -269,7 +269,7 @@ class HasSecrets extends DataExtension
                         // store the encrypted value
                         $this->owner->$field_name = $backend->encrypt($updated_value);
                     } catch (Exception $e) {
-                        SS_Log::log("Encryption failed with error: " . $e->getMessage(), SS_Log::NOTICE);
+                        // SS_Log::log("Encryption failed with error: " . $e->getMessage(), SS_Log::NOTICE);
                     }
                 } else {
                     // local storage in database

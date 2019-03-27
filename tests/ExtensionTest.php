@@ -2,16 +2,15 @@
 namespace Codem\OneTime;
 
 use Aws\Kms\Exception\KmsException;
-use FunctionalTest;
-use DataObject;
-use Object;
-use Session;
-use DB;
-use FieldList;
-use FormAction;
-use Form;
-use Controller;
-use TestOnly;
+use SilverStripe\Dev\FunctionalTest;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\Control\Session;
+use SilverStripe\ORM\DB;
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\FormAction;
+use SilverStripe\Forms\Form;
+use SilverStripe\Control\Controller;
+use SilverStripe\Dev\TestOnly;
 
 /**
  * Functional Tests for HasSecrets
@@ -34,7 +33,7 @@ class ExtensionTest extends FunctionalTest
 
     public function testKmsFormSubmission()
     {
-        Object::add_extension('Codem\OneTime\TestKmsDataObject', 'Codem\OneTime\HasSecrets');
+        TestKmsDataObject::add_extension( HasSecrets::class );
 
         $one_fieldname = self::ONE_FIELDNAME;
         $one_plain_value = self::ONE_FIELDVALUE;
@@ -77,7 +76,7 @@ class ExtensionTest extends FunctionalTest
 
     public function testLocalFormSubmission()
     {
-        Object::add_extension('Codem\OneTime\TestLocalDataObject', 'Codem\OneTime\HasSecrets');
+        TestLocalDataObject::add_extension( HasSecrets::class );
 
         $one_fieldname = self::ONE_FIELDNAME;
         $one_plain_value = self::ONE_FIELDVALUE;
@@ -122,8 +121,8 @@ class ExtensionTest extends FunctionalTest
      */
     public function testClearValuesFormSubmission()
     {
-        Object::add_extension('Codem\OneTime\TestClearLocalDataObject', 'Codem\OneTime\HasSecrets');
 
+        TestClearLocalDataObject::add_extension( HasSecrets::class );
 
         $one_fieldname = self::ONE_FIELDNAME;
         $one_plain_value = self::ONE_FIELDVALUE;

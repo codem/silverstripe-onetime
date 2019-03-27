@@ -2,7 +2,7 @@
 namespace Codem\OneTime;
 
 use Aws\Kms\KmsClient as KmsClient;
-use Config;
+use SilverStripe\Core\Config\Config;
 use Exception;
 
 /**

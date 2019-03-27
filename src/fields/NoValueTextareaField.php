@@ -1,8 +1,8 @@
 <?php
 namespace Codem\Form\Field;
 
-use TextareaField;
-use CheckboxField;
+use SilverStripe\Forms\TextareaField;
+use SilverStripe\Forms\CheckboxField;
 
 class NoValueTextareaField extends TextareaField implements NoValueFieldInteface
 {

@@ -1,9 +1,9 @@
 <?php
 namespace Codem\OneTime;
 
-use SapphireTest;
+use SilverStripe\Dev\SapphireTest;
 use Exception;
-use Config;
+use SilverStripe\Core\Config\Config;
 
 class PartialValueTest extends SapphireTest
 {

@@ -2,7 +2,7 @@
 namespace Codem\FieldTypes;
 
 use Codem\OneTime\PartialValue;
-use Extension;
+use SilverStripe\Core\Extension;
 
 class PartialText extends Extension
 {

@@ -1,10 +1,12 @@
 <?php
 namespace Codem\OneTime;
 
-use Object;
+use SilverStripe\Core\Config\Configurable;
 
-class PartialValue extends Object
+class PartialValue
 {
+    use Configurable;
+
     const FILTER_HIDE_MIDDLE = 'filter_hide_middle';
 
     private static $min_characters_replaced = 6;// always show this number of characters replaced, at a minimum

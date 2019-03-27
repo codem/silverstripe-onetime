@@ -2,11 +2,10 @@
 namespace Codem\OneTime;
 
 use Aws\Kms\Exception\KmsException;
-use SapphireTest;
+use SilverStripe\Dev\SapphireTest;
 use Exception;
-use Object;
-use DataObject;
-use TestOnly;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\Dev\TestOnly;
 
 class ProviderTest extends SapphireTest
 {
