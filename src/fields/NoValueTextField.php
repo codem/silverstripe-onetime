@@ -39,7 +39,7 @@ class NoValueTextField extends TextField implements NoValueFieldInteface
      *
      * @return $this
      */
-    public function setValue($value)
+    public function setValue($value, $data = null)
     {
         $this->value = "";
         return $this;

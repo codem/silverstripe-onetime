@@ -40,7 +40,7 @@ class NoValueTextareaField extends TextareaField implements NoValueFieldInteface
      *
      * @return $this
      */
-    public function setValue($value)
+    public function setValue($value, $data = null)
     {
         $this->value = "";
 
