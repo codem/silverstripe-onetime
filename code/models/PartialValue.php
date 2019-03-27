@@ -31,7 +31,7 @@ class PartialValue extends Object
 
         switch ($filter) {
             case self::FILTER_HIDE_MIDDLE:
-                // this rule shows the first/last 3 characters
+                // this rule shows the first 3 and last 6 characters
                 $pattern = "/^(.{3})(.+)(.{6})$/";
                 $result = preg_match($pattern, $value, $matches);
                 if ($result == 1 && count($matches) == 4) {
@@ -44,8 +44,10 @@ class PartialValue extends Object
                     $partial_value = $matches[1]
                         . str_repeat($replacement_character, $replacement_length)
                         . $matches[3];
+                } else {
+                    // mask the entire value
+                    $partial_value = $this->replaceAllWith($replacement_character, $length);
                 }
-                //$partial_value = preg_replace()
                 break;
             default:
                 // the default is to hide the last number of characters based on rules
