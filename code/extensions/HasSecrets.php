@@ -279,4 +279,31 @@ class HasSecrets extends DataExtension
         }
         return true;
     }
+
+    /**
+     * Modify summary fields, use dot notation to change values based on the methods in {@link Codem\FieldTypes\PartialText}
+	 * @param array $fields Array of field names
+     */
+    public function updateSummaryFields(&$fields) {
+        parent::updateSummaryFields($fields);
+        $secret_fields = $this->getSecretFields();
+        if (empty($secret_fields) || !is_array($secret_fields)) {
+            return;
+        }
+
+        $update_fields = [];
+        foreach($fields as $k=>$v) {
+            if(!array_key_exists($k, $secret_fields)) {
+                // do not modify the value
+                $update_fields[ $k ] = $v;
+            } else if( isset($secret_fields[$k]['partial']) && $secret_fields[$k]['partial'] ) {
+                // partial display - trigger PartialText::OneTimePartial()
+                $update_fields[ $k . ".OneTimePartial" ] = $v;
+            } else {
+                // no partial value - trigger PartialText::OneTimeValueExists()
+                $update_fields[ $k . ".OneTimeValueExists" ] = $v;
+            }
+        }
+        $fields = $update_fields;
+    }
 }
