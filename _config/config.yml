@@ -6,12 +6,12 @@ Codem\OneTime\PartialValue:
   max_characters_replaced : 18
   percent_cleared : 80
   replacement_character: '●'
-Varchar:
+SilverStripe\ORM\FieldType\DBVarchar:
   extensions:
     - 'Codem\FieldTypes\PartialText'
-Text:
+SilverStripe\ORM\FieldType\DBText:
   extensions:
     - 'Codem\FieldTypes\PartialText'
-StringField:
+SilverStripe\ORM\FieldType\DBString:
   extensions:
     - 'Codem\FieldTypes\PartialText'

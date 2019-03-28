@@ -1,17 +1,23 @@
 <?php
-namespace Codem\OneTime;
+namespace Codem\OneTime\Tests;
 
+use Codem\OneTime\HasSecrets;
+use Codem\OneTime\PartialValue;
 use Aws\Kms\Exception\KmsException;
-use FunctionalTest;
-use DataObject;
-use Object;
-use Session;
-use DB;
-use FieldList;
-use FormAction;
-use Form;
-use Controller;
-use TestOnly;
+use SilverStripe\Dev\FunctionalTest;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\Control\Session;
+use SilverStripe\ORM\DB;
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\FormAction;
+use SilverStripe\Forms\Form;
+use SilverStripe\Control\Controller;
+use SilverStripe\Dev\TestOnly;
+use SilverStripe\CMS\Model\SiteTree;
+use SilverStripe\Versioned\Versioned;
+use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Core\Injector\Injector;
 
 /**
  * Functional Tests for HasSecrets
@@ -26,95 +32,132 @@ class ExtensionTest extends FunctionalTest
 
     protected $usesDatabase = true;
 
-    protected $extraDataObjects = [
+    protected static $fixture_file = "ExtensionTest.yml";
+
+    protected $theme_base_dir = '/vendor/MrJamesEllis/silverstripe-onetime/tests';// TODO another way?
+
+    protected static $extra_dataobjects = [
         TestKmsDataObject::class,
         TestLocalDataObject::class,
-        TestClearLocalDataObject::class
+        TestClearLocalDataObject::class,
+        TestLocalPage::class,
+        TestClearPage::class,
+        TestKmsPage::class,
     ];
 
     public function testKmsFormSubmission()
     {
-        Object::add_extension('Codem\OneTime\TestKmsDataObject', 'Codem\OneTime\HasSecrets');
 
-        $one_fieldname = self::ONE_FIELDNAME;
-        $one_plain_value = self::ONE_FIELDVALUE;
-        $two_fieldname = self::TWO_FIELDNAME;
-        $two_plain_value = self::TWO_FIELDVALUE;
+        $test = $this;
 
-        $input_field_one = HasSecrets::getAlteredFieldName($one_fieldname);
-        $input_field_two = HasSecrets::getAlteredFieldName($two_fieldname);
+        $this->useTestTheme($this->theme_base_dir, 'onetimetest', function () use ($test) {
 
-        $data = [
-            $input_field_one => $one_plain_value,
-            $input_field_two => $two_plain_value,
-        ];
+            TestKmsDataObject::add_extension( HasSecrets::class );
 
-        // POST to the controller
-        $form_id = 'Form_Form';
-        $response = $this->post('Codem\OneTime\OneTimeKmsTestController', $data);
-        $response = $this->submitForm(
-            $form_id,
-            'action_doSubmit',
-            $data
-        );
+            $one_fieldname = self::ONE_FIELDNAME;
+            $one_plain_value = self::ONE_FIELDVALUE;
+            $two_fieldname = self::TWO_FIELDNAME;
+            $two_plain_value = self::TWO_FIELDVALUE;
 
-        // get submitted data from Controller
-        $test = Session::get('TestKmsDataObject_record');
+            $input_field_one = HasSecrets::getAlteredFieldName($one_fieldname);
+            $input_field_two = HasSecrets::getAlteredFieldName($two_fieldname);
 
-        $this->assertTrue(!empty($test->$one_fieldname));
-        $this->assertTrue(!empty($test->$two_fieldname));
+            $data = [
+                $input_field_one => $one_plain_value,
+                $input_field_two => $two_plain_value,
+            ];
 
-        $this->assertNotEquals($test->$one_fieldname, self::ONE_FIELDVALUE);
-        $this->assertNotEquals($test->$two_fieldname, self::TWO_FIELDVALUE);
+            $page = TestKmsPage::get()->filter('URLSegment','kms-test-page')->first();
+            $page->copyVersionToStage(Versioned::DRAFT, Versioned::LIVE);
 
-        $one_decrypted = $test->decrypt(self::ONE_FIELDNAME);
-        $two_decrypted = $test->decrypt(self::TWO_FIELDNAME);
+            // POST to the controller
+            $form_id = 'Form_Form';
+            $response = $test->get( $page->Link() );
+            $response = $test->submitForm(
+                $form_id,
+                'action_doSubmit',
+                $data
+            );
 
-        // test decryption values match
-        $this->assertEquals($one_decrypted, self::ONE_FIELDVALUE);
-        $this->assertEquals($two_decrypted, self::TWO_FIELDVALUE);
+            // get submitted data from Controller
+            $session = Controller::curr()->getRequest()->getSession();
+            $record = $session->get('TestKmsDataObject_record');
+
+            $this->assertTrue($record instanceof TestKmsDataObject);
+
+            $test->assertTrue(isset($record->$one_fieldname) && $record->$one_fieldname !== "");
+            $test->assertTrue(isset($record->$two_fieldname) && $record->$two_fieldname !== "");
+
+            // the encrypted values must not match the plain text values
+            $test->assertNotEquals($record->$one_fieldname, self::ONE_FIELDVALUE);
+            $test->assertNotEquals($record->$two_fieldname, self::TWO_FIELDVALUE);
+
+            $one_decrypted = $record->decrypt(self::ONE_FIELDNAME);
+            $two_decrypted = $record->decrypt(self::TWO_FIELDNAME);
+
+            // test decryption values match plaintext values
+            $test->assertEquals($one_decrypted, self::ONE_FIELDVALUE);
+            $test->assertEquals($two_decrypted, self::TWO_FIELDVALUE);
+
+        });
+
     }
 
     public function testLocalFormSubmission()
     {
-        Object::add_extension('Codem\OneTime\TestLocalDataObject', 'Codem\OneTime\HasSecrets');
 
-        $one_fieldname = self::ONE_FIELDNAME;
-        $one_plain_value = self::ONE_FIELDVALUE;
-        $two_fieldname = self::TWO_FIELDNAME;
-        $two_plain_value = self::TWO_FIELDVALUE;
+        $test = $this;
 
-        $input_field_one = HasSecrets::getAlteredFieldName($one_fieldname);
-        $input_field_two = HasSecrets::getAlteredFieldName($two_fieldname);
+        $this->useTestTheme($this->theme_base_dir, 'onetimetest', function () use ($test) {
 
-        $data = [
-            $input_field_one => $one_plain_value,
-            $input_field_two => $two_plain_value,
-        ];
+            TestLocalDataObject::add_extension( HasSecrets::class );
 
-        $form_id = 'Form_Form';
-        $response = $this->post('Codem\OneTime\OneTimeLocalTestController', $data);
-        $response = $this->submitForm(
-            $form_id,
-            'action_doSubmit',
-            $data
-        );
+            $one_fieldname = self::ONE_FIELDNAME;
+            $one_plain_value = self::ONE_FIELDVALUE;
+            $two_fieldname = self::TWO_FIELDNAME;
+            $two_plain_value = self::TWO_FIELDVALUE;
 
-        // get submitted data from Controller
-        $test = Session::get('TestLocalDataObject_record');
+            $input_field_one = HasSecrets::getAlteredFieldName($one_fieldname);
+            $input_field_two = HasSecrets::getAlteredFieldName($two_fieldname);
 
-        $this->assertTrue(!empty($test->$one_fieldname));
-        $this->assertTrue(!empty($test->$two_fieldname));
+            $data = [
+                $input_field_one => $one_plain_value,
+                $input_field_two => $two_plain_value,
+            ];
 
-        $this->assertEquals($test->$one_fieldname, self::ONE_FIELDVALUE);
-        $this->assertEquals($test->$two_fieldname, self::TWO_FIELDVALUE);
+            $page = TestLocalPage::get()->filter('URLSegment','local-test-page')->first();
+            $page->copyVersionToStage(Versioned::DRAFT, Versioned::LIVE);
 
-        $one_decrypted = $test->decrypt(self::ONE_FIELDNAME);
-        $two_decrypted = $test->decrypt(self::TWO_FIELDNAME);
+            $form_id = 'Form_Form';
+            // switch to page
+            $response = $test->get( $page->Link() );
+            // submit form
+            $response = $test->submitForm(
+                $form_id,
+                'action_doSubmit',
+                $data
+            );
 
-        // test decryption values match
-        $this->assertEquals($one_decrypted, self::ONE_FIELDVALUE);
-        $this->assertEquals($two_decrypted, self::TWO_FIELDVALUE);
+            // get submitted data from Controller
+            $session = Controller::curr()->getRequest()->getSession();
+            $record = $session->get('TestLocalDataObject_record');
+            $this->assertTrue($record instanceof TestLocalDataObject);
+
+            $test->assertTrue(!empty($record->$one_fieldname));
+            $test->assertTrue(!empty($record->$two_fieldname));
+
+            $test->assertEquals($record->$one_fieldname, self::ONE_FIELDVALUE);
+            $test->assertEquals($record->$two_fieldname, self::TWO_FIELDVALUE);
+
+            $one_decrypted = $record->decrypt(self::ONE_FIELDNAME);
+            $two_decrypted = $record->decrypt(self::TWO_FIELDNAME);
+
+            // test decryption values match
+            $test->assertEquals($one_decrypted, self::ONE_FIELDVALUE);
+            $test->assertEquals($two_decrypted, self::TWO_FIELDVALUE);
+
+        });
+
     }
 
     /**
@@ -122,226 +165,75 @@ class ExtensionTest extends FunctionalTest
      */
     public function testClearValuesFormSubmission()
     {
-        Object::add_extension('Codem\OneTime\TestClearLocalDataObject', 'Codem\OneTime\HasSecrets');
+        $test = $this;
 
+        $this->useTestTheme($this->theme_base_dir, 'onetimetest', function () use ($test) {
 
-        $one_fieldname = self::ONE_FIELDNAME;
-        $one_plain_value = self::ONE_FIELDVALUE;
-        $two_fieldname = self::TWO_FIELDNAME;
-        $two_plain_value = self::TWO_FIELDVALUE;
+            TestClearLocalDataObject::add_extension( HasSecrets::class );
 
-        // create a record (clear values only appear for existing records)
-        $test = new TestClearLocalDataObject();
-        $id = $test->write();
+            $one_fieldname = self::ONE_FIELDNAME;
+            $one_plain_value = self::ONE_FIELDVALUE;
+            $two_fieldname = self::TWO_FIELDNAME;
+            $two_plain_value = self::TWO_FIELDVALUE;
 
-        // force store some values in the fields
-        DB::Query("UPDATE `Codem\OneTime\TestClearLocalDataObject`\n"
-              . " SET {$one_fieldname} = '" . $one_plain_value . "',"
-              . " {$two_fieldname} = '" . $two_plain_value . "'"
-              . " WHERE ID = {$id}");
+            // create a record (clear values only appear for existing records)
+            $test_object = new TestClearLocalDataObject();
+            $id = $test_object->write();
 
-        $test = TestClearLocalDataObject::get()->byId($id);
-        $test_values = $test->getQueriedDatabaseFields();
+            // force store some values in the fields
+            DB::Query("UPDATE `TestClearLocalDataObject`\n"
+                  . " SET {$one_fieldname} = '" . $one_plain_value . "',"
+                  . " {$two_fieldname} = '" . $two_plain_value . "'"
+                  . " WHERE ID = {$id}");
 
-        Session::set('TestClearLocalDataObject_record', $test);
+            $test_object = TestClearLocalDataObject::get()->byId($id);
+            $test_values = $test_object->getQueriedDatabaseFields();
 
-        $this->assertEquals($one_plain_value, $test_values[ self::ONE_FIELDNAME ]);
-        $this->assertEquals($two_plain_value, $test_values[ self::TWO_FIELDNAME ]);
+            $session = Controller::curr()->getRequest()->getSession();
 
-        $clear_field_one = HasSecrets::getClearFieldName($one_fieldname);
-        $clear_field_two = HasSecrets::getClearFieldName($two_fieldname);
-        $input_field_one = HasSecrets::getAlteredFieldName($one_fieldname);
-        $input_field_two = HasSecrets::getAlteredFieldName($two_fieldname);
+            $session->set('TestClearLocalDataObject_record', $test_object);
 
-        $data = [
-            // these field values can be submitted, but the clear checkbox values will remove them
-            $input_field_one => $one_plain_value,
-            $input_field_two => $two_plain_value,
-            $clear_field_one => 1,
-            $clear_field_two => 1,
-        ];
+            $test->assertEquals($one_plain_value, $test_values[ self::ONE_FIELDNAME ]);
+            $test->assertEquals($two_plain_value, $test_values[ self::TWO_FIELDNAME ]);
 
-        $form_id = 'Form_Form';
-        $response = $this->post('Codem\OneTime\OneTimeClearTestController', $data);
-        $response = $this->submitForm(
-            $form_id,
-            'action_doSubmit',
-            $data
-        );
+            $clear_field_one = HasSecrets::getClearFieldName($one_fieldname);
+            $clear_field_two = HasSecrets::getClearFieldName($two_fieldname);
+            $input_field_one = HasSecrets::getAlteredFieldName($one_fieldname);
+            $input_field_two = HasSecrets::getAlteredFieldName($two_fieldname);
 
-        // get submitted data from Controller
-        $test = Session::get('TestClearLocalDataObject_record');
+            $data = [
+                // these field values can be submitted, but the clear checkbox values will remove them
+                $input_field_one => $one_plain_value,
+                $input_field_two => $two_plain_value,
+                // clear checkbox values
+                $clear_field_one => 1,
+                $clear_field_two => 1,
+            ];
 
-        $this->assertTrue(isset($test->$one_fieldname), "Field {$one_fieldname} is not set");
-        $this->assertTrue(isset($test->$two_fieldname), "Field {$two_fieldname} is not set");
-        $this->assertTrue($test->$one_fieldname === "", "Field {$one_fieldname} is not empty string");
-        $this->assertTrue($test->$two_fieldname === "", "Field {$two_fieldname} is not empty string");
+            $page = TestClearPage::get()->filter('URLSegment','clear-test-page')->first();
+            $page->copyVersionToStage(Versioned::DRAFT, Versioned::LIVE);
+
+            $form_id = 'Form_Form';
+            // switch to page
+            $response = $test->get( $page->Link() );
+            // submit form
+            $response = $test->submitForm(
+                $form_id,
+                'action_doSubmit',
+                $data
+            );
+
+            // get submitted data from Controller - at this point the values should be cleared
+            $record = $session->get('TestClearLocalDataObject_record');
+
+            // the field names should be present
+            $test->assertTrue(isset($record->$one_fieldname), "Field {$one_fieldname} is not set");
+            $test->assertTrue(isset($record->$two_fieldname), "Field {$two_fieldname} is not set");
+            // but the values must be an empty string
+            $test->assertTrue($record->$one_fieldname === "", "Field {$one_fieldname} is not empty string");
+            $test->assertTrue($record->$two_fieldname === "", "Field {$two_fieldname} is not empty string");
+
+        });
+
     }
-}
-
-
-/**
- * Controller handling saving of KMS data
- */
-class OneTimeKmsTestController extends Controller implements TestOnly
-{
-    private static $allowed_actions = array(
-        'Form'
-    );
-
-    protected $template = 'BlankPage';
-
-    public function Form()
-    {
-        $test = TestKmsDataObject::create();
-        $fields = $test->getCmsFields();
-        $actions = FieldList::create(
-            FormAction::create('doSubmit')
-        );
-        $form = new Form(
-            $this,
-            'Form',
-            $fields,
-            $actions
-        );
-        return $form;
-    }
-
-    public function doSubmit($data, $form, $request)
-    {
-        $test = new TestKmsDataObject($data);
-        $test->write();
-        Session::set('TestKmsDataObject_record', $test);
-    }
-}
-
-/**
- * Test DataObject for KMS values
- */
-class TestKmsDataObject extends DataObject implements TestOnly
-{
-    private static $secret_fields = array('FieldTestOne','FieldTestTwo');
-    private static $secrets_provider = 'AmazonKMS';
-
-    /**
-     * Database fields
-     * @var array
-     */
-    private static $db = array(
-        'FieldTestOne' => 'Text',
-        'FieldTestTwo' => 'Text',
-    );
-}
-
-
-/**
- * Controller for 'Local' saving
- */
-class OneTimeLocalTestController extends Controller implements TestOnly
-{
-    private static $allowed_actions = array(
-        'Form'
-    );
-
-    protected $template = 'BlankPage';
-
-    public function Form()
-    {
-        $test = new TestLocalDataObject();
-        $fields = $test->getCmsFields();
-        $actions = FieldList::create(
-            FormAction::create('doSubmit')
-        );
-
-        $form = new Form(
-            $this,
-            'Form',
-            $fields,
-            $actions
-        );
-
-        return $form;
-    }
-
-    public function doSubmit($data, $form, $request)
-    {
-        $test = new TestLocalDataObject($data);
-        $test->write();
-        Session::set('TestLocalDataObject_record', $test);
-    }
-}
-
-
-/**
- * DataObject for Local
- */
-class TestLocalDataObject extends DataObject implements TestOnly
-{
-    private static $secret_fields = array('FieldTestOne','FieldTestTwo');
-    private static $secrets_provider = 'Local';
-
-    /**
-     * Database fields
-     * @var array
-     */
-    private static $db = array(
-        'FieldTestOne' => 'Text',
-        'FieldTestTwo' => 'Text',
-    );
-}
-
-
-/**
- * Controller for 'Local' saving
- */
-class OneTimeClearTestController extends Controller implements TestOnly
-{
-    private static $allowed_actions = array(
-        'Form'
-    );
-
-    protected $template = 'BlankPage';
-
-    public function Form()
-    {
-        $test = Session::get('TestClearLocalDataObject_record');
-        $fields = $test->getCmsFields();
-        $actions = FieldList::create(
-            FormAction::create('doSubmit')
-        );
-
-        $form = new Form(
-            $this,
-            'Form',
-            $fields,
-            $actions
-        );
-
-        return $form;
-    }
-
-    public function doSubmit($data, $form, $request)
-    {
-        $test = Session::get('TestClearLocalDataObject_record');
-        $test->write();
-    }
-}
-
-
-/**
- * DataObject for Local
- */
-class TestClearLocalDataObject extends DataObject implements TestOnly
-{
-    private static $secret_fields = array('FieldTestOne','FieldTestTwo');
-    private static $secrets_provider = 'Local';
-
-    /**
-     * Database fields
-     * @var array
-     */
-    private static $db = array(
-        'FieldTestOne' => 'Text',
-        'FieldTestTwo' => 'Text',
-    );
 }

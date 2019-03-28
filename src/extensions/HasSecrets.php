@@ -4,15 +4,15 @@ namespace Codem\OneTime;
 use Codem\Form\Field\PartialValueTextField;
 use Codem\Form\Field\NoValueTextField;
 use Codem\Form\Field\NoValueTextareaField;
-use DataExtension;
-use Config;
+use SilverStripe\ORM\DataExtension;
+use SilverStripe\Core\Config\Config;
 use Exception;
-use FieldList;
-use FormField;
-use TextareaField;
-use CheckboxField;
-use Controller;
-use SS_Log;
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\FormField;
+use SilverStripe\Forms\TextareaField;
+use SilverStripe\Forms\CheckboxField;
+use SilverStripe\Control\Controller;
+// use SS_Log;
 
 /**
  * HasSecrets
@@ -37,7 +37,7 @@ class HasSecrets extends DataExtension
     protected function getSecretFields()
     {
         $secret_fields = [];
-        $field_schema = Config::inst()->get($this->owner->class, 'onetime_field_schema');
+        $field_schema = $this->owner->config()->get('onetime_field_schema');
         if (is_array($field_schema)) {
             // use field schema, which provides more detailed setup
             foreach ($field_schema as $field_name => $meta) {
@@ -49,14 +49,16 @@ class HasSecrets extends DataExtension
             }
         } else {
             // fall back to deprecated simple schema, use the single configured provider with partial display off
-            $field_schema = Config::inst()->get($this->owner->class, 'secret_fields');
-            $provider = $this->getSecretsProvider();
-            foreach ($field_schema as $field_name) {
-                $secret_fields[ $field_name ] = [
-                    'provider' => $provider,
-                    'partial' => false,
-                    'partial_filter' => ''
-                ];
+            $field_schema = $this->owner->config()->get('secret_fields');
+            if(is_array($field_schema)) {
+                $provider = $this->getSecretsProvider();
+                foreach ($field_schema as $field_name) {
+                    $secret_fields[ $field_name ] = [
+                        'provider' => $provider,
+                        'partial' => false,
+                        'partial_filter' => ''
+                    ];
+                }
             }
         }
         return $secret_fields;
@@ -67,7 +69,7 @@ class HasSecrets extends DataExtension
      */
     protected function getSecretsProvider()
     {
-        $provider = Config::inst()->get($this->owner->class, 'secrets_provider');
+        $provider = $this->owner->config()->get('secrets_provider');
         if (empty($provider)) {
             throw new Exception('Provider not supplied in config');
         }
@@ -269,7 +271,8 @@ class HasSecrets extends DataExtension
                         // store the encrypted value
                         $this->owner->$field_name = $backend->encrypt($updated_value);
                     } catch (Exception $e) {
-                        SS_Log::log("Encryption failed with error: " . $e->getMessage(), SS_Log::NOTICE);
+                        // SS_Log::log("Encryption failed with error: " . $e->getMessage(), SS_Log::NOTICE);
+                        $this->owner->$field_name = "";// ensure the value is empty if it cannot be encrypted
                     }
                 } else {
                     // local storage in database

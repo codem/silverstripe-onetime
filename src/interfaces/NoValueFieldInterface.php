@@ -1,7 +1,7 @@
 <?php
 namespace Codem\Form\Field;
 
-use CheckboxField;
+use SilverStripe\Forms\CheckboxField;
 
 interface NoValueFieldInteface
 {

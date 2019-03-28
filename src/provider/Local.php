@@ -10,7 +10,7 @@ class ProviderLocal extends BaseProvider
     {
         return $value;
     }
-    
+
     public function decrypt($encrypted_value)
     {
         return $encrypted_value;

@@ -2,17 +2,16 @@
 namespace Codem\OneTime;
 
 use Aws\Kms\Exception\KmsException;
-use SapphireTest;
+use SilverStripe\Dev\SapphireTest;
 use Exception;
-use Object;
-use DataObject;
-use TestOnly;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\Dev\TestOnly;
 
 class ProviderTest extends SapphireTest
 {
     protected $usesDatabase = true;
 
-    protected $extraDataObjects = [
+    protected static $extra_dataobjects = [
         TestProviderKmsDataObject::class
     ];
 
@@ -107,6 +106,12 @@ class TestProviderKmsDataObject extends DataObject implements TestOnly
 {
     private static $secret_fields = array('FieldTestOne','FieldTestTwo');
     private static $secrets_provider = 'AmazonKMS';
+
+    /**
+     * Defines the database table name
+     * @var string
+     */
+    private static $table_name = 'TestProviderKmsDataObject';
 
     /**
      * Database fields

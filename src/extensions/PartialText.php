@@ -2,8 +2,8 @@
 namespace Codem\FieldTypes;
 
 use Codem\OneTime\PartialValue;
-use Extension;
-use Text;
+use SilverStripe\Core\Extension;
+use SilverStripe\ORM\FieldType\DBText;
 
 class PartialText extends Extension
 {
@@ -46,7 +46,7 @@ class PartialText extends Extension
      */
     public function OneTimeConcealed()
     {
-        if($this->owner instanceof Text) {
+        if($this->owner instanceof DBText) {
             return $this->OneTimeValueExists();
         } else {
             $length = strlen($this->owner->RAW());
