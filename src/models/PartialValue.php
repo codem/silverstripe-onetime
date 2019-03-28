@@ -86,7 +86,7 @@ class PartialValue
         return $partial_value;
     }
 
-    protected function replaceAllWith($replacement_character, $length)
+    public function replaceAllWith($replacement_character, $length)
     {
         return str_repeat($replacement_character, $length);
     }
