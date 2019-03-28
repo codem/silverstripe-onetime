@@ -11,7 +11,7 @@ class PartialValue extends Object
     private static $max_characters_exposed = 6;// always show this number of characters replaced, at a minimum
     private static $max_characters_replaced = 18;// always show this number of characters replaced, at a minimum
     private static $percent_cleared = 80;// number of characters replaced
-    private static $replacement_character = "*";// replacement character to use
+    private static $replacement_character = "●";// replacement character to use
 
     /**
      * @param string $value
@@ -84,7 +84,7 @@ class PartialValue extends Object
         return $partial_value;
     }
 
-    protected function replaceAllWith($replacement_character, $length)
+    public function replaceAllWith($replacement_character, $length)
     {
         return str_repeat($replacement_character, $length);
     }
