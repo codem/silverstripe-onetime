@@ -13,7 +13,7 @@ class PartialValue
     private static $max_characters_exposed = 6;// always show this number of characters replaced, at a minimum
     private static $max_characters_replaced = 18;// always show this number of characters replaced, at a minimum
     private static $percent_cleared = 80;// number of characters replaced
-    private static $replacement_character = "*";// replacement character to use
+    private static $replacement_character = "●";// replacement character to use
 
     /**
      * @param string $value
