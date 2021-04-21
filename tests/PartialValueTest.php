@@ -1,5 +1,5 @@
 <?php
-namespace Codem\OneTime;
+namespace Codem\OneTime\Tests;
 
 use SilverStripe\Dev\SapphireTest;
 use Exception;
