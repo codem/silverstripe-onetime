@@ -1,21 +1,49 @@
 {
-    "name": "MrJamesEllis/silverstripe-onetime",
+    "name": "codem/silverstripe-onetime",
     "description": "A module to assist saving of private values to a backend",
     "type": "silverstripe-vendormodule",
-    "keywords": ["silverstripe", "kms", "aws"],
+    "keywords": [
+        "silverstripe",
+        "kms",
+        "aws"
+    ],
     "license": "BSD-3-Clause",
     "authors": [
-    {
-        "name": "James Ellis",
-        "email": "git@codem.com.au"
-    }
+        {
+            "name": "James Ellis",
+            "email": "git@codem.com.au"
+        }
     ],
-    "extra": {
-        "installer-name": "onetime"
-    },
-    "require":
-    {
+    "require": {
         "silverstripe/framework": "^4",
         "aws/aws-sdk-php": "^3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^5.7",
+        "friendsofphp/php-cs-fixer": "^2.18",
+        "phpstan/phpstan": "^0.12.0",
+        "symbiote/silverstripe-phpstan": "^4",
+        "silverstripe/sqlite3": "^2"
+    },
+    "replace": {
+        "mrjamesellis/silverstripe-onetime": "self.version"
+    },
+    "autoload": {
+        "psr-4": {
+            "Codem\\OneTime\\": [
+                "src/Extensions/",
+                "src/Fields/",
+                "src/Interfaces/",
+                "src/Models/",
+                "src/Providers/"
+            ]
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Codem\\OneTime\\Tests\\": [
+                "tests/"
+            ]
+        }
     }
 }
