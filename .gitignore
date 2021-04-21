@@ -1,1 +1,7 @@
 /.php_cs.cache
+/vendor/
+/resources/
+/composer.lock
+/.php_cs.cache
+/app/
+/assets/

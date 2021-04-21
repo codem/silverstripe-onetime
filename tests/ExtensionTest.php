@@ -34,7 +34,7 @@ class ExtensionTest extends FunctionalTest
 
     protected static $fixture_file = "ExtensionTest.yml";
 
-    protected $theme_base_dir = '/vendor/MrJamesEllis/silverstripe-onetime/tests';// TODO another way?
+    protected $theme_base_dir = '/vendor/codem/silverstripe-onetime/tests';// TODO another way?
 
     protected static $extra_dataobjects = [
         TestKmsDataObject::class,

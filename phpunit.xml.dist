@@ -1,0 +1,50 @@
+<phpunit
+    bootstrap="vendor/silverstripe/framework/tests/bootstrap.php"
+    colors="true"
+    backupGlobals="false"
+    backupStaticAttributes="false"
+    convertErrorsToExceptions="true"
+    convertNoticesToExceptions="true"
+    convertWarningsToExceptions="true"
+    processIsolation="false"
+    stopOnError="false"
+    stopOnFailure="false"
+    stopOnIncomplete="false"
+    stopOnSkipped="false"
+    syntaxCheck="false"
+    verbose="true"
+    strict="false">
+
+    <testsuite name="codem/silverstripe-onetime">
+        <directory>tests/</directory>
+    </testsuite>
+
+    <groups>
+        <exclude>
+            <group>sanitychecks</group>
+        </exclude>
+    </groups>
+
+    <filter>
+        <whitelist addUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">src/</directory>
+            <exclude>
+                <directory suffix=".php">tests/</directory>
+            </exclude>
+        </whitelist>
+    </filter>
+
+    <php>
+        <!-- use envvarset in your YML files -->
+        <env name="SS_TEST" value="1"/>
+        <var name="runningtests" value="true"/>
+        <!-- sqlite3 for testing module -->
+        <env name="SS_DATABASE_CLASS" value="SQLite3Database"/>
+        <env name="SS_DATABASE_NAME" value="SS_ontime_testdb"/>
+        <env name="SS_DATABASE_SERVER" value="none"/>
+        <env name="SS_DATABASE_USERNAME" value="none"/>
+        <env name="SS_DATABASE_PASSWORD" value="none"/>
+        <env name="SS_SQLITE_DATABASE_PATH" value=":memory:"/>
+    </php>
+
+</phpunit>

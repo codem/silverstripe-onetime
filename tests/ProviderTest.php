@@ -1,5 +1,5 @@
 <?php
-namespace Codem\OneTime;
+namespace Codem\OneTime\Tests;
 
 use Aws\Kms\Exception\KmsException;
 use SilverStripe\Dev\SapphireTest;
