@@ -63,35 +63,43 @@ use SilverStripe\ORM\DataObject;
 
 class MyDataObject extends DataObject {
 
+    /**
+     * Example schema for 3 fields
+     */
     private static $onetime_field_schema = [
-
-        // store a value locally
-        'TextFieldEmpty' => [
-            'provider' => 'Local',// this field isn't encrypted
-            'partial' => false
-        ],
-
-        // store the value encrypted with your KMS configuration
-        'TextFieldPartial' => [
-            'provider' => 'AmazonKMS',// the stored value is encrypted using AWS KMS
-            'partial' => true,
-            'partial_filter' => PartialValue::FILTER_HIDE_MIDDLE // with a specific partial filter
-        ],
-        'TextFieldPartialDefault' => [
+        'SecretValue' => [
             'provider' => 'Local',
-            'partial' => true // default partial value view
+            'partial' => true, // default partial value view
+            'tab' => 'Secrets' // on this CMS tab
         ],
-        'TextareaFieldEmpty' => [
-            'provider' => 'AmazonKMS',
-            'partial' => false // no partial value view
+        'SecretValueSmall' => [
+            'provider' => 'Local',
+            'partial' => true, // default partial value view
+            'tab' => 'Secrets' // on this CMS tab
+        ],
+        'SecretValueNoPartial' => [
+            'provider' => 'Local',
+            'partial' => false, // default partial value view
+            'tab' => 'MoreSecrets' // on a different CMS tab
         ]
+    ];
 
+    private static $db = [
+        // other fields
+        // ...
+        'SecretValue' => 'Text',// a Textarea - no partial display for these even if partial is true
+        'SecretValueSmall' => 'Varchar',// a TextField
+        'SecretValueNoPartial' => 'Varchar'//  a TextField with no partial value displayed
     ];
 
     // etc
 }
 
 ```
+
+The above config will look something like this. The 2nd field has a value saved.
+
+<img src="./docs/img/schema_field_display.png">
 
 ## Providers
 

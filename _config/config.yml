@@ -8,10 +8,10 @@ Codem\OneTime\PartialValue:
   replacement_character: '●'
 SilverStripe\ORM\FieldType\DBVarchar:
   extensions:
-    - 'Codem\FieldTypes\PartialText'
+    - 'Codem\OneTime\PartialText'
 SilverStripe\ORM\FieldType\DBText:
   extensions:
-    - 'Codem\FieldTypes\PartialText'
+    - 'Codem\OneTime\PartialText'
 SilverStripe\ORM\FieldType\DBString:
   extensions:
-    - 'Codem\FieldTypes\PartialText'
+    - 'Codem\OneTime\PartialText'

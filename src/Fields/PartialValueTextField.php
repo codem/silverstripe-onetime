@@ -1,7 +1,5 @@
 <?php
-namespace Codem\Form\Field;
-
-use Codem\OneTime\PartialValue;
+namespace Codem\OneTime;
 
 /**
  * A field that shows a hint of the saved value within a field

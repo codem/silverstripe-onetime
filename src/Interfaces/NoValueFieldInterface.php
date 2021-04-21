@@ -1,5 +1,5 @@
 <?php
-namespace Codem\Form\Field;
+namespace Codem\OneTime;
 
 use SilverStripe\Forms\CheckboxField;
 

@@ -1,7 +1,6 @@
 <?php
-namespace Codem\FieldTypes;
+namespace Codem\OneTime;
 
-use Codem\OneTime\PartialValue;
 use SilverStripe\Core\Extension;
 use SilverStripe\ORM\FieldType\DBText;
 

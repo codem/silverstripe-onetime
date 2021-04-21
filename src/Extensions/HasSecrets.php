@@ -1,54 +1,68 @@
 <?php
 namespace Codem\OneTime;
 
-use Codem\Form\Field\PartialValueTextField;
-use Codem\Form\Field\NoValueTextField;
-use Codem\Form\Field\NoValueTextareaField;
 use SilverStripe\ORM\DataExtension;
+use SilverStripe\ORM\FieldType\DBVarchar;
+use SilverStripe\ORM\FieldType\DBText;
 use SilverStripe\Core\Config\Config;
 use Exception;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\FormField;
+use SilverStripe\Forms\TextField;
 use SilverStripe\Forms\TextareaField;
 use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Control\Controller;
-// use SS_Log;
 
 /**
- * HasSecrets
- * @note an extension for a {@link DataObject} that has one or more secret fields
- * To define that a DataObject has one or more secret fields, set a private static in the DataObject:
+ * HasSecrets extension for a {@link SilverStripe\ORM\DataObject} that has one or more 'secret' fields
+ *
+ * To define that a DataObject has one or more secret fields
+ * 1. Add this extension to the DataObject
+ * 2. Set a private static in the DataObject
+ *
  * <pre>
  * private static $onetime_field_schema = [
  *      'PrivateKey' => [ 'provider' => 'AmazonKMS', 'partial' => true ],
- *      'Password' => [ 'provider' => 'Local', 'partial' => false ],
- *      'SomethingElseThatShouldBeEncrypted' => [ 'provider' => 'Local', 'partial' => true ]
+ *      'Password' => [ 'provider' => 'Local', 'partial' => false ], // not encrypted
+ *      'SomethingElseThatShouldBeEncrypted' => [ 'provider' => 'Local', 'partial' => true ] // not encrypted
  * ];
- *  Previous versions supported this configuration which is now deprecated:
+ *
+ * Previous versions supported this configuration which is now deprecated:
  * <pre>
  *  private static $secret_fields = array('PrivateKey','Password','SomethingElseThatShouldBeEncrypted');
  *  private static $secrets_provider = 'AmazonKMS';// or 'Local'
  * </pre>
+ *
  * This extension will do the rest.
+ *
  * A number of backends are present: the database (Local) and Amazon KMS (AmazonKMS)
  */
 class HasSecrets extends DataExtension
 {
-    protected function getSecretFields()
+
+    /**
+     * Return the owner DataObject configured secret fields
+     * @return array
+     */
+    protected function getSecretFields() : array
     {
         $secret_fields = [];
         $field_schema = $this->owner->config()->get('onetime_field_schema');
         if (is_array($field_schema)) {
-            // use field schema, which provides more detailed setup
             foreach ($field_schema as $field_name => $meta) {
                 $secret_fields[ $field_name ] = [
                     'provider' => isset($meta['provider']) ? $meta['provider'] : 'Local',
                     'partial' => isset($meta['partial']) ? (bool)$meta['partial'] : false,
                     'partial_filter' => isset($meta['partial_filter']) ? $meta['partial_filter'] : '',
+                    'tab' => isset($meta['tab']) ? $meta['tab'] : '',
                 ];
             }
         } else {
-            // fall back to deprecated simple schema, use the single configured provider with partial display off
+            /**
+             * fall back to deprecated simple schema
+             * use the single configured provider with partial display off
+             * this configuration option will be removed in a future release
+             */
             $field_schema = $this->owner->config()->get('secret_fields');
             if(is_array($field_schema)) {
                 $provider = $this->getSecretsProvider();
@@ -56,7 +70,8 @@ class HasSecrets extends DataExtension
                     $secret_fields[ $field_name ] = [
                         'provider' => $provider,
                         'partial' => false,
-                        'partial_filter' => ''
+                        'partial_filter' => '',
+                        'tab' => 'Main'
                     ];
                 }
             }
@@ -79,6 +94,10 @@ class HasSecrets extends DataExtension
     protected function getProviderForField($field_data)
     {
         return isset($field_data['provider']) ? $field_data['provider'] : '';
+    }
+
+    protected function getFieldTab($field_data) : string {
+        return isset($field_data['tab']) ? $field_data['tab'] : 'Main';
     }
 
     public static function getAlteredFieldName($field_name)
@@ -132,13 +151,41 @@ class HasSecrets extends DataExtension
 
         foreach ($secret_fields as $field_name => $field_data) {
             $field = $fields->dataFieldByName($field_name);
-            // TODO what happens if the field is not found?
+
+            // handle if field doesn't exist
+            if(!$field) {
+                // add it, of the correct type, so it can be replaced
+                $type = $this->owner->dbObject($field_name);
+                switch(get_class($type)) {
+                    case DBText::class:
+                        $field = TextareaField::create(
+                            $field_name,
+                            FormField::name_to_label($field_name)
+                        );
+                        break;
+                    case DBVarchar::class:
+                    default:
+                        $field = TextField::create(
+                            $field_name,
+                            FormField::name_to_label($field_name)
+                        );
+                        break;
+                }
+                $fields->addFieldToTab(
+                    'Root.' . $this->getFieldTab($field_data),
+                    $field
+                );
+                $field = $fields->dataFieldByName($field_name);
+            }
+
+            // check for field and replace into tabset
             if ($field) {
                 $this->replaceField(
                     $fields,
                     $field,
                     $field_data['partial'],
-                    $field_data['partial_filter']
+                    $field_data['partial_filter'],
+                    $this->getFieldTab($field_data)
                 );
             }
         }
@@ -150,9 +197,10 @@ class HasSecrets extends DataExtension
      * @param FormField $field
      * @param boolean $display_partial_value
      * @param string $partial_filter
+     * @param string $field_tab
      * @returns void
      */
-    private function replaceField(FieldList $fields, FormField $field, $display_partial_value = true, $partial_filter = "")
+    private function replaceField(FieldList $fields, FormField $field, $display_partial_value = true, $partial_filter = "", string $field_tab = "Main")
     {
         $field_name = $field->getName();
         $altered_field_name = self::getAlteredFieldName($field_name);
@@ -217,6 +265,8 @@ class HasSecrets extends DataExtension
             $field->getName(),
             $replacement_input_field
         );
+        // ensure field is on the right tab
+        $fields->addFieldToTab( "Root." . $field_tab, $replacement_input_field);
     }
 
     public function onAfterWrite()
@@ -246,6 +296,7 @@ class HasSecrets extends DataExtension
         $post_data = $request->postVars();
 
         $secret_fields = $this->getSecretFields();
+
         foreach ($secret_fields as $field_name => $field_data) {
 
             // get value for this request
@@ -271,7 +322,6 @@ class HasSecrets extends DataExtension
                         // store the encrypted value
                         $this->owner->$field_name = $backend->encrypt($updated_value);
                     } catch (Exception $e) {
-                        // SS_Log::log("Encryption failed with error: " . $e->getMessage(), SS_Log::NOTICE);
                         $this->owner->$field_name = "";// ensure the value is empty if it cannot be encrypted
                     }
                 } else {
